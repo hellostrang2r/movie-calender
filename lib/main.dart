@@ -164,7 +164,9 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
                         ),
                         const Divider(height: 1),
                         SizedBox(
-                          height: 220,
+                          height: screenheight < 700
+                              ? screenheight * 0.22
+                              : 220,
                           child: _SelectedDateMovieList(
                             selectedDate: selectedDate,
                             movies: selectedMovies,
