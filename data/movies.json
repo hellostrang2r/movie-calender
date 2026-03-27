@@ -315,12 +315,30 @@
     "isReRelease": false
   },
   {
+    "movieCd": "20262420",
+    "movieNm": "강압적 대물에 푹 빠진 육덕녀",
+    "openDt": "2026-03-26",
+    "genreNm": "",
+    "nationAlt": "한국",
+    "director": "정보 없음",
+    "isReRelease": false
+  },
+  {
     "movieCd": "20262291",
     "movieNm": "뮤지컬 장수탕 선녀님",
     "openDt": "2026-03-26",
     "genreNm": "",
     "nationAlt": "한국",
     "director": "조윤수",
+    "isReRelease": false
+  },
+  {
+    "movieCd": "20262461",
+    "movieNm": "아저씨의 애무에 넘어간 아가씨",
+    "openDt": "2026-03-26",
+    "genreNm": "",
+    "nationAlt": "한국",
+    "director": "정보 없음",
     "isReRelease": false
   },
   {
@@ -374,6 +392,15 @@
     "openDt": "2026-04-01",
     "genreNm": "",
     "nationAlt": "일본",
+    "director": "정보 없음",
+    "isReRelease": false
+  },
+  {
+    "movieCd": "20262653",
+    "movieNm": "마법 숲 동물 친구들 대모험",
+    "openDt": "2026-04-01",
+    "genreNm": "",
+    "nationAlt": "아랍에미리트연합국정부",
     "director": "정보 없음",
     "isReRelease": false
   },
@@ -573,6 +600,15 @@
     "genreNm": "",
     "nationAlt": "일본",
     "director": "사카이 카즈오",
+    "isReRelease": false
+  },
+  {
+    "movieCd": "20262685",
+    "movieNm": "란 12.3",
+    "openDt": "2026-04-22",
+    "genreNm": "",
+    "nationAlt": "한국",
+    "director": "이명세",
     "isReRelease": false
   },
   {
