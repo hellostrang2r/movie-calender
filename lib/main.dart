@@ -115,6 +115,7 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(title: const Text('영화 개봉 캘린더'), centerTitle: true),
       body: SafeArea(
@@ -164,8 +165,8 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
                         ),
                         const Divider(height: 1),
                         SizedBox(
-                          height: screenheight < 700
-                              ? screenheight * 0.22
+                          height: screenHeight < 700
+                              ? screenHeight * 0.22
                               : 220,
                           child: _SelectedDateMovieList(
                             selectedDate: selectedDate,
