@@ -1,9 +1,13 @@
 import requests
 import datetime
 import json
+import os
 from pathlib import Path
+from dotenv import load_dotenv
 
-KOBIS_KEY = "REDACTED_KOBIS_KEY"
+load_dotenv()
+
+KOBIS_KEY = os.getenv("KOBIS_KEY")
 
 DATA_DIR = Path("data")
 MOVIES_FILE = DATA_DIR / "movies.json"
