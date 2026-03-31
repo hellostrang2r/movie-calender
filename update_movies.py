@@ -143,6 +143,50 @@ def movie_key(movie):
     return movie.get("movieCd", "")
 
 
+def load_excluded_movies(path: Path):
+    raw = load_json_list(path)
+
+    excluded_movies = []
+    seen_ids = set()
+
+    for item in raw:
+        if isinstance(item, str):
+            movie_cd = item.strip()
+            if movie_cd and movie_cd not in seen_ids:
+                excluded_movies.append({
+                    "movieCd": movie_cd,
+                    "movieNm": "",
+                    "openDt": "",
+                    "genreNm": "",
+                    "nationAlt": "",
+                    "director": "",
+                })
+                seen_ids.add(movie_cd)
+
+        elif isinstance(item, dict):
+            movie_cd = item.get("movieCd", "").strip()
+            if movie_cd and movie_cd not in seen_ids:
+                excluded_movies.append({
+                    "movieCd": movie_cd,
+                    "movieNm": item.get("movieNm", ""),
+                    "openDt": item.get("openDt", ""),
+                    "genreNm": item.get("genreNm", ""),
+                    "nationAlt": item.get("nationAlt", ""),
+                    "director": item.get("director", ""),
+                })
+                seen_ids.add(movie_cd)
+
+    return excluded_movies
+
+
+def build_excluded_id_set(excluded_movies):
+    return {
+        movie.get("movieCd")
+        for movie in excluded_movies
+        if movie.get("movieCd")
+    }
+
+
 def build_movie_map(movies):
     return {movie_key(movie): movie for movie in movies if movie_key(movie)}
 
@@ -171,17 +215,41 @@ def main():
     # 기존 파일 로드
     current_movies = load_json_list(MOVIES_FILE)
     last_generated_movies = load_json_list(LAST_GENERATED_FILE)
-    excluded_ids = set(load_json_list(EXCLUDED_IDS_FILE))
+    excluded_movies = load_json_list(EXCLUDED_IDS_FILE)
+    excluded_ids = {
+    movie.get("movieCd")
+    for movie in excluded_movies
+    if isinstance(movie, dict) and movie.get("movieCd")
+    }
 
     # 사용자가 직접 삭제한 영화 자동 감지
     auto_detected_deleted_ids = detect_user_deleted_ids(
-        last_generated_movies,
-        current_movies,
+    last_generated_movies,
+    current_movies,
     )
 
     if auto_detected_deleted_ids:
         print(f"\n사용자 삭제 감지: {len(auto_detected_deleted_ids)}편")
-        excluded_ids.update(auto_detected_deleted_ids)
+
+    existing_excluded_ids = build_excluded_id_set(excluded_movies)
+
+    for movie in last_generated_movies:
+        movie_id = movie_key(movie)
+
+        if (
+            movie_id in auto_detected_deleted_ids
+            and movie_id not in existing_excluded_ids
+        ):
+            excluded_movies.append({
+                "movieCd": movie.get("movieCd", ""),
+                "movieNm": movie.get("movieNm", ""),
+                "openDt": movie.get("openDt", ""),
+                "genreNm": movie.get("genreNm", ""),
+                "nationAlt": movie.get("nationAlt", ""),
+                "director": movie.get("director", ""),
+            })
+
+    excluded_ids = build_excluded_id_set(excluded_movies)
 
     # KOBIS에서 새 목록 추출
     raw_movies = fetch_all_movies(start_date.year, end_date.year)
@@ -243,14 +311,17 @@ def main():
     # 저장
     save_json_list(MOVIES_FILE, final_movies)
     save_json_list(LAST_GENERATED_FILE, newly_generated_movies)
-    save_json_list(EXCLUDED_IDS_FILE, sorted(excluded_ids))
+    excluded_movies.sort(
+    key=lambda x: (x.get("openDt", ""), x.get("movieNm", ""))
+    )
+    save_json_list(EXCLUDED_IDS_FILE, excluded_movies)
 
     print("\n=== 업데이트 결과 ===")
     print(f"현재 목록 개수: {len(current_movies)}")
     print(f"새로 추출된 개수: {len(newly_generated_movies)}")
     print(f"새로 추가된 개수: {len(added)}")
     print(f"기존에 있어서 유지된 개수: {len(skipped_existing)}")
-    print(f"자동 제외 목록 개수: {len(excluded_ids)}")
+    print(f"자동 제외 목록 개수: {len(excluded_movies)}")
     print(f"최종 저장 개수: {len(final_movies)}")
 
     if added:
