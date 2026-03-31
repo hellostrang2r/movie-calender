@@ -351,15 +351,6 @@
     "isReRelease": false
   },
   {
-    "movieCd": "manual_20260401_farewellmyconcubine",
-    "movieNm": "패왕별희",
-    "openDt": "2026-04-01",
-    "genreNm": "드라마",
-    "nationAlt": "중국",
-    "director": "첸 카이거",
-    "isReRelease": true
-  },
-  {
     "movieCd": "20259598",
     "movieNm": "두 검사",
     "openDt": "2026-04-01",
@@ -421,6 +412,15 @@
     "nationAlt": "미국",
     "director": "쿠엔틴 타란티노",
     "isReRelease": false
+  },
+  {
+    "movieCd": "manual_20260401_farewellmyconcubine",
+    "movieNm": "패왕별희",
+    "openDt": "2026-04-01",
+    "genreNm": "드라마",
+    "nationAlt": "중국",
+    "director": "첸 카이거",
+    "isReRelease": true
   },
   {
     "movieCd": "20192680",
@@ -594,12 +594,39 @@
     "isReRelease": false
   },
   {
+    "movieCd": "20242482",
+    "movieNm": "관념의 남자 김철수",
+    "openDt": "2026-04-22",
+    "genreNm": "",
+    "nationAlt": "한국",
+    "director": "이재리",
+    "isReRelease": false
+  },
+  {
+    "movieCd": "20262775",
+    "movieNm": "기동전사 건담: 섬광의 하사웨이 키르케의 마녀",
+    "openDt": "2026-04-22",
+    "genreNm": "",
+    "nationAlt": "일본",
+    "director": "무라세 슈코",
+    "isReRelease": false
+  },
+  {
     "movieCd": "20262685",
     "movieNm": "란 12.3",
     "openDt": "2026-04-22",
     "genreNm": "",
     "nationAlt": "한국",
     "director": "이명세",
+    "isReRelease": false
+  },
+  {
+    "movieCd": "20262776",
+    "movieNm": "르누아르",
+    "openDt": "2026-04-22",
+    "genreNm": "",
+    "nationAlt": "일본,프랑스",
+    "director": "하야카와 치에",
     "isReRelease": false
   },
   {
@@ -627,6 +654,15 @@
     "genreNm": "",
     "nationAlt": "한국",
     "director": "정우",
+    "isReRelease": false
+  },
+  {
+    "movieCd": "20228063",
+    "movieNm": "미스매치",
+    "openDt": "2026-04-23",
+    "genreNm": "",
+    "nationAlt": "한국",
+    "director": "손태웅",
     "isReRelease": false
   },
   {
