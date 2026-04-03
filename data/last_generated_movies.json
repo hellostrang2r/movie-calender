@@ -1,122 +1,5 @@
 [
   {
-    "movieCd": "20261906",
-    "movieNm": "명탐정 코난: 세기말의 마술사",
-    "openDt": "2026-03-27",
-    "genreNm": "",
-    "nationAlt": "일본",
-    "director": "코다마 켄지",
-    "isReRelease": false
-  },
-  {
-    "movieCd": "20262179",
-    "movieNm": "펫 트레인",
-    "openDt": "2026-03-28",
-    "genreNm": "",
-    "nationAlt": "프랑스",
-    "director": "정보 없음",
-    "isReRelease": false
-  },
-  {
-    "movieCd": "20261666",
-    "movieNm": "네가 마지막으로 남긴 노래",
-    "openDt": "2026-04-01",
-    "genreNm": "",
-    "nationAlt": "일본",
-    "director": "미키 타카히로",
-    "isReRelease": false
-  },
-  {
-    "movieCd": "20259598",
-    "movieNm": "두 검사",
-    "openDt": "2026-04-01",
-    "genreNm": "",
-    "nationAlt": "프랑스,독일,네덜란드",
-    "director": "세르게이 로즈니차",
-    "isReRelease": false
-  },
-  {
-    "movieCd": "20261731",
-    "movieNm": "류이치 사카모토: 다이어리",
-    "openDt": "2026-04-01",
-    "genreNm": "",
-    "nationAlt": "일본",
-    "director": "정보 없음",
-    "isReRelease": false
-  },
-  {
-    "movieCd": "20262653",
-    "movieNm": "마법 숲 동물 친구들 대모험",
-    "openDt": "2026-04-01",
-    "genreNm": "",
-    "nationAlt": "아랍에미리트연합국정부",
-    "director": "정보 없음",
-    "isReRelease": false
-  },
-  {
-    "movieCd": "20262053",
-    "movieNm": "소녀심판",
-    "openDt": "2026-04-01",
-    "genreNm": "",
-    "nationAlt": "한국",
-    "director": "류광현",
-    "isReRelease": false
-  },
-  {
-    "movieCd": "20243842",
-    "movieNm": "술타나의 꿈",
-    "openDt": "2026-04-01",
-    "genreNm": "",
-    "nationAlt": "스페인",
-    "director": "정보 없음",
-    "isReRelease": false
-  },
-  {
-    "movieCd": "20262661",
-    "movieNm": "스크림 7",
-    "openDt": "2026-04-01",
-    "genreNm": "",
-    "nationAlt": "미국",
-    "director": "케빈 윌리엄슨",
-    "isReRelease": false
-  },
-  {
-    "movieCd": "20262101",
-    "movieNm": "킬 빌: 더 홀 블러디 어페어",
-    "openDt": "2026-04-01",
-    "genreNm": "",
-    "nationAlt": "미국",
-    "director": "쿠엔틴 타란티노",
-    "isReRelease": false
-  },
-  {
-    "movieCd": "20192680",
-    "movieNm": "끝장수사",
-    "openDt": "2026-04-02",
-    "genreNm": "",
-    "nationAlt": "한국",
-    "director": "박철환",
-    "isReRelease": false
-  },
-  {
-    "movieCd": "20256103",
-    "movieNm": "모래그릇",
-    "openDt": "2026-04-02",
-    "genreNm": "",
-    "nationAlt": "일본",
-    "director": "정보 없음",
-    "isReRelease": false
-  },
-  {
-    "movieCd": "20262463",
-    "movieNm": "오피셜히게단디즘 라이브 앳 스타디움 2025",
-    "openDt": "2026-04-02",
-    "genreNm": "",
-    "nationAlt": "일본",
-    "director": "정보 없음",
-    "isReRelease": false
-  },
-  {
     "movieCd": "20262327",
     "movieNm": "특별편집판 기동전사 건담 철혈의 오펀스 우르드 헌트 -작은 도전자의 궤적-",
     "openDt": "2026-04-04",
@@ -216,15 +99,6 @@
     "isReRelease": false
   },
   {
-    "movieCd": "20262383",
-    "movieNm": "쉘터",
-    "openDt": "2026-04-15",
-    "genreNm": "",
-    "nationAlt": "미국",
-    "director": "릭 로먼 워",
-    "isReRelease": false
-  },
-  {
     "movieCd": "20262202",
     "movieNm": "침묵의 친구",
     "openDt": "2026-04-15",
@@ -261,12 +135,57 @@
     "isReRelease": false
   },
   {
+    "movieCd": "20262639",
+    "movieNm": "노멀",
+    "openDt": "2026-04-17",
+    "genreNm": "",
+    "nationAlt": "미국",
+    "director": "벤 휘틀리",
+    "isReRelease": false
+  },
+  {
+    "movieCd": "20242482",
+    "movieNm": "관념의 남자 김철수",
+    "openDt": "2026-04-22",
+    "genreNm": "",
+    "nationAlt": "한국",
+    "director": "이재리",
+    "isReRelease": false
+  },
+  {
+    "movieCd": "20262775",
+    "movieNm": "기동전사 건담: 섬광의 하사웨이 키르케의 마녀",
+    "openDt": "2026-04-22",
+    "genreNm": "",
+    "nationAlt": "일본",
+    "director": "무라세 슈코",
+    "isReRelease": false
+  },
+  {
     "movieCd": "20262685",
     "movieNm": "란 12.3",
     "openDt": "2026-04-22",
     "genreNm": "",
     "nationAlt": "한국",
     "director": "이명세",
+    "isReRelease": false
+  },
+  {
+    "movieCd": "20262776",
+    "movieNm": "르누아르",
+    "openDt": "2026-04-22",
+    "genreNm": "",
+    "nationAlt": "일본,프랑스",
+    "director": "하야카와 치에",
+    "isReRelease": false
+  },
+  {
+    "movieCd": "20262657",
+    "movieNm": "리 크로닌의 미이라",
+    "openDt": "2026-04-22",
+    "genreNm": "",
+    "nationAlt": "미국",
+    "director": "리 크로닌",
     "isReRelease": false
   },
   {
@@ -297,12 +216,30 @@
     "isReRelease": false
   },
   {
+    "movieCd": "20228063",
+    "movieNm": "미스매치",
+    "openDt": "2026-04-23",
+    "genreNm": "",
+    "nationAlt": "한국",
+    "director": "손태웅",
+    "isReRelease": false
+  },
+  {
     "movieCd": "20259773",
     "movieNm": "슈퍼 마리오 갤럭시",
     "openDt": "2026-04-29",
     "genreNm": "",
     "nationAlt": "미국",
     "director": "정보 없음",
+    "isReRelease": false
+  },
+  {
+    "movieCd": "20261243",
+    "movieNm": "그녀가 돌아온 날",
+    "openDt": "2026-05-06",
+    "genreNm": "",
+    "nationAlt": "한국",
+    "director": "홍상수",
     "isReRelease": false
   }
 ]
