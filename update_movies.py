@@ -14,6 +14,7 @@ MOVIES_FILE = DATA_DIR / "movies.json"
 LAST_GENERATED_FILE = DATA_DIR / "last_generated_movies.json"
 EXCLUDED_IDS_FILE = DATA_DIR / "excluded_movie_ids.json"
 BLOCKED_KEYWORDS_FILE = Path("blocked_keywords.txt")
+MANUAL_MOVIES_FILE = DATA_DIR / "manual_movies.json"
 
 EXCLUDED_GENRE_KEYWORDS = [
     "성인물(에로)",
@@ -215,6 +216,8 @@ def main():
     # 기존 파일 로드
     current_movies = load_json_list(MOVIES_FILE)
     last_generated_movies = load_json_list(LAST_GENERATED_FILE)
+    manual_movies = load_json_list(MANUAL_MOVIES_FILE)
+
     excluded_movies = load_json_list(EXCLUDED_IDS_FILE)
     excluded_ids = {
     movie.get("movieCd")
@@ -304,6 +307,22 @@ def main():
 
         current_map[movie_cd] = movie
         added.append(movie)
+    
+    manual_added = []
+    manual_skipped = []
+
+    for movie in manual_movies:
+        movie_cd = movie_key(movie)
+
+        if not movie_cd:
+            continue
+
+        if movie_cd in current_map:
+            manual_skipped.append(movie)
+            continue
+
+    current_map[movie_cd] = movie
+    manual_added.append(movie)
 
     final_movies = list(current_map.values())
     final_movies.sort(key=lambda x: (x.get("openDt", ""), x.get("movieNm", "")))
@@ -321,6 +340,7 @@ def main():
     print(f"새로 추출된 개수: {len(newly_generated_movies)}")
     print(f"새로 추가된 개수: {len(added)}")
     print(f"기존에 있어서 유지된 개수: {len(skipped_existing)}")
+    print(f"수동 추가 개수: {len(manual_added)}")
     print(f"자동 제외 목록 개수: {len(excluded_movies)}")
     print(f"최종 저장 개수: {len(final_movies)}")
 
