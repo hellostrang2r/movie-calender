@@ -321,8 +321,8 @@ def main():
             manual_skipped.append(movie)
             continue
 
-    current_map[movie_cd] = movie
-    manual_added.append(movie)
+        current_map[movie_cd] = movie
+        manual_added.append(movie)
 
     final_movies = list(current_map.values())
     final_movies.sort(key=lambda x: (x.get("openDt", ""), x.get("movieNm", "")))

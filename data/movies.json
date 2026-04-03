@@ -486,6 +486,15 @@
     "isReRelease": true
   },
   {
+    "movieCd": "manual_20260408_romanholiday",
+    "movieNm": "로마의 휴일",
+    "openDt": "2026-04-08",
+    "genreNm": "로맨스",
+    "nationAlt": "미국",
+    "director": "윌리엄 와일러",
+    "isReRelease": true
+  },
+  {
     "movieCd": "20254121",
     "movieNm": "살목지",
     "openDt": "2026-04-08",
@@ -520,6 +529,15 @@
     "nationAlt": "미국",
     "director": "바트 레이튼",
     "isReRelease": false
+  },
+  {
+    "movieCd": "manual_20260408_breakfastattiffanys",
+    "movieNm": "티파니에서 아침을",
+    "openDt": "2026-04-08",
+    "genreNm": "로맨스",
+    "nationAlt": "미국",
+    "director": "블레이크 에드워즈",
+    "isReRelease": true
   },
   {
     "movieCd": "20262648",
