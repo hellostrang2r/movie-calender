@@ -61639,7 +61639,7 @@ r===$&&A.b()
 s=t.gQ.a(B.b.gbB(r.f)).gtj()
 s.toString
 r.Hj(B.d.af(s)+1,B.dK,B.jC)},
-O(a){var s,r,q,p,o,n,m=this,l=null,k=A.cw(a,l,t.w).w.a.b,j=k<700?k*0.25:240,i=m.e
+O(a){var s,r,q,p,o,n,m=this,l=null,k=A.cw(a,l,t.w).w.a.b,j=k<700?k*0.27:250,i=m.e
 i===$&&A.b()
 s=m.ga44()
 r=m.ga3S()
