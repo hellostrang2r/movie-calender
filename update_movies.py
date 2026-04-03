@@ -235,13 +235,14 @@ def main():
         print(f"\n사용자 삭제 감지: {len(auto_detected_deleted_ids)}편")
 
     existing_excluded_ids = build_excluded_id_set(excluded_movies)
-
+    manual_ids = {movie_key(m) for m in manual_movies}
     for movie in last_generated_movies:
         movie_id = movie_key(movie)
 
         if (
             movie_id in auto_detected_deleted_ids
             and movie_id not in existing_excluded_ids
+            and movie_id not in manual_ids
         ):
             excluded_movies.append({
                 "movieCd": movie.get("movieCd", ""),
