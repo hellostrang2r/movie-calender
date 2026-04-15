@@ -1,9 +1,14 @@
-import requests
 import datetime
 import json
+import os
 from pathlib import Path
 
-KOBIS_KEY = "REDACTED_KOBIS_KEY"
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
+KOBIS_KEY = os.getenv("KOBIS_KEY")
 
 OUTPUT_FILE = Path("data/movies.json")
 BLOCKED_KEYWORDS_FILE = Path("blocked_keywords.txt")
