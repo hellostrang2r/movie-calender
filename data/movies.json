@@ -285,7 +285,8 @@
     "genreNm": "뮤지컬",
     "nationAlt": "미국",
     "director": "로버트 와이즈",
-    "isReRelease": true
+    "isReRelease": true,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/3l1ATCYNuHep6evzX8GSUigWOLs.jpg"
   },
   {
     "movieCd": "19868242",
@@ -492,7 +493,8 @@
     "genreNm": "로맨스",
     "nationAlt": "미국",
     "director": "윌리엄 와일러",
-    "isReRelease": true
+    "isReRelease": true,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/dYLiHwYkoxCZI6bJUik4ZHbMRkc.jpg"
   },
   {
     "movieCd": "20254121",
@@ -537,7 +539,8 @@
     "genreNm": "로맨스",
     "nationAlt": "미국",
     "director": "블레이크 에드워즈",
-    "isReRelease": true
+    "isReRelease": true,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/8U6b8j8wTRsFZ4k57sVOvEwpKkY.jpg"
   },
   {
     "movieCd": "20262648",
@@ -646,7 +649,7 @@
     "nationAlt": "미국",
     "director": "피터 위어",
     "isReRelease": true,
-    "posterUrl": false
+    "posterUrl": "https://image.tmdb.org/t/p/w500/AsUv4pFf1UQuOLKf7nYUXgmgCNf.jpg"
   },
   {
     "movieCd": "20259339",

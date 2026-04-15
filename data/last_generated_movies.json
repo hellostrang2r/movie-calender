@@ -16,7 +16,8 @@
     "genreNm": "",
     "nationAlt": "프랑스,독일,네덜란드",
     "director": "세르게이 로즈니차",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/wau82xY0mui2JXLCZK9sti3TioS.jpg"
   },
   {
     "movieCd": "20261731",
@@ -25,7 +26,8 @@
     "genreNm": "",
     "nationAlt": "일본",
     "director": "정보 없음",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/m82qaGFsfORJNbMM4aY0EvBJM1G.jpg"
   },
   {
     "movieCd": "20262653",
@@ -34,7 +36,8 @@
     "genreNm": "",
     "nationAlt": "아랍에미리트연합국정부",
     "director": "정보 없음",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/gYBZICAItWhdmYNyL9yupUwTQnp.jpg"
   },
   {
     "movieCd": "20243842",
@@ -43,7 +46,8 @@
     "genreNm": "",
     "nationAlt": "스페인",
     "director": "정보 없음",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/aytXJNkcJU0NV294OoN96ARCKoa.jpg"
   },
   {
     "movieCd": "20262661",
@@ -62,7 +66,8 @@
     "genreNm": "",
     "nationAlt": "미국",
     "director": "쿠엔틴 타란티노",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/je5CQCCvXoAhWAwi6MoCai8IFwC.jpg"
   },
   {
     "movieCd": "20192680",
@@ -81,7 +86,8 @@
     "genreNm": "",
     "nationAlt": "일본",
     "director": "정보 없음",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/2zB5ySojpqPd3rEGWzc32bCDLi1.jpg"
   },
   {
     "movieCd": "20262463",
@@ -90,7 +96,8 @@
     "genreNm": "",
     "nationAlt": "일본",
     "director": "정보 없음",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/g4Y9OrdmssvUsxawfGb1zOVwTeL.jpg"
   },
   {
     "movieCd": "20262327",
@@ -100,7 +107,7 @@
     "nationAlt": "일본",
     "director": "나가이 타츠유키",
     "isReRelease": false,
-    "posterUrl": "https://image.tmdb.org/t/p/w500/tCtECshR8McDJRlHxrN85A7urXD.jpg"
+    "posterUrl": "https://image.tmdb.org/t/p/w500/421VGMl4eDmdI4EdElnSuSCVX62.jpg"
   },
   {
     "movieCd": "20254121",
@@ -129,7 +136,8 @@
     "genreNm": "",
     "nationAlt": "프랑스",
     "director": "존 크로울리",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/i8HPNRsXx9Cen4CkSWMk94t6gHM.jpg"
   },
   {
     "movieCd": "20262343",
@@ -178,7 +186,8 @@
     "genreNm": "",
     "nationAlt": "프랑스",
     "director": "엘리자베스 레나드",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/nlXp3K6rIP34IavABLSSfbCWQDb.jpg"
   },
   {
     "movieCd": "20250411",
@@ -187,7 +196,8 @@
     "genreNm": "",
     "nationAlt": "일본",
     "director": "정보 없음",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/pgr6EXnzKNtPikxBj5qS7tS8N3M.jpg"
   },
   {
     "movieCd": "20262541",
@@ -236,7 +246,8 @@
     "genreNm": "",
     "nationAlt": "영국",
     "director": "사울 스위머",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/ynnYU19czD7gizvQMRMsTeKqcBM.jpg"
   },
   {
     "movieCd": "20259339",
@@ -245,7 +256,8 @@
     "genreNm": "",
     "nationAlt": "프랑스",
     "director": "정보 없음",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/rHYvGIEBHnAzkQsg1xiX5MJy7td.jpg"
   },
   {
     "movieCd": "20262811",
@@ -254,7 +266,8 @@
     "genreNm": "",
     "nationAlt": "일본",
     "director": "사카이 카즈오",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/muigQVrx1QjkmjDQxYmI32Yd0HG.jpg"
   },
   {
     "movieCd": "20262907",
@@ -313,7 +326,8 @@
     "genreNm": "",
     "nationAlt": "일본,프랑스",
     "director": "하야카와 치에",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/jEZ7ezDPnGElqk3Yomked5aOE6P.jpg"
   },
   {
     "movieCd": "20262657",
@@ -332,7 +346,8 @@
     "genreNm": "",
     "nationAlt": "미국",
     "director": "카슨 룬드",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/2NydzK2umgHwDgvFwGxCLmSBeji.jpg"
   },
   {
     "movieCd": "20244564",
@@ -400,7 +415,8 @@
     "genreNm": "",
     "nationAlt": "이탈리아",
     "director": "정보 없음",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/dbIMAvBOgnKBPWRSZsj2sIshc93.jpg"
   },
   {
     "movieCd": "20262906",
@@ -459,7 +475,8 @@
     "genreNm": "",
     "nationAlt": "프랑스",
     "director": "합시아 헤지",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/488QeW987DdK0RQGZISgBhuncn7.jpg"
   },
   {
     "movieCd": "20261409",
@@ -468,7 +485,8 @@
     "genreNm": "",
     "nationAlt": "싱가포르,대만,폴란드",
     "director": "정보 없음",
-    "isReRelease": false
+    "isReRelease": false,
+    "posterUrl": "https://image.tmdb.org/t/p/w500/n0ms8DI33iLvf612zU1NTK9cjwI.jpg"
   },
   {
     "movieCd": "20262631",
