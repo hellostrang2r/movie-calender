@@ -1,13 +1,18 @@
-import requests
 import datetime
 import json
 import os
+import re
+import time
 from pathlib import Path
+
+import requests
 from dotenv import load_dotenv
+from requests.exceptions import ReadTimeout
 
 load_dotenv()
 
 KOBIS_KEY = os.getenv("KOBIS_KEY")
+TMDB_BEARER_TOKEN = os.getenv("TMDB_BEARER_TOKEN", "").strip()
 
 DATA_DIR = Path("data")
 MOVIES_FILE = DATA_DIR / "movies.json"
@@ -18,6 +23,26 @@ MANUAL_MOVIES_FILE = DATA_DIR / "manual_movies.json"
 
 EXCLUDED_GENRE_KEYWORDS = [
     "성인물(에로)",
+]
+
+TMDB_API_BASE = "https://api.themoviedb.org/3"
+TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
+KOBIS_TIMEOUT_SECONDS = 60
+KOBIS_MAX_RETRIES = 3
+TITLE_NOISE_PATTERNS = [
+    r"\b4k\s*리마스터\b",
+    r"\b4k\b",
+    r"\b리마스터\b",
+    r"\b감독판\b",
+    r"\b확장판\b",
+    r"\b특별판\b",
+    r"\b특별전\b",
+    r"\b기획전\b",
+    r"\b재개봉\b",
+    r"\b돌비\s*시네마\b",
+    r"\bios\b",
+    r"\bimax\b",
+    r"\bscreenx\b",
 ]
 
 
@@ -32,6 +57,491 @@ def load_blocked_keywords():
 BLOCKED_TITLE_KEYWORDS = load_blocked_keywords()
 
 
+def get_tmdb_headers():
+    if not TMDB_BEARER_TOKEN:
+        return None
+
+    return {
+        "Authorization": f"Bearer {TMDB_BEARER_TOKEN}",
+        "Accept": "application/json",
+    }
+
+
+def normalize_title_for_match(title: str) -> str:
+    if not title:
+        return ""
+
+    text = title.lower().strip()
+    replace_map = {
+        "：": ":",
+        "–": "-",
+        "—": "-",
+        "’": "'",
+        "‘": "'",
+        "“": '"',
+        "”": '"',
+    }
+
+    for old, new in replace_map.items():
+        text = text.replace(old, new)
+
+    return " ".join(text.split())
+
+
+def extract_release_year(open_dt):
+    if not open_dt:
+        return None
+
+    try:
+        return int(str(open_dt)[:4])
+    except Exception:
+        return None
+
+
+def clean_tmdb_search_title(title: str) -> str:
+    if not title:
+        return ""
+
+    cleaned = title.strip()
+
+    for pattern in TITLE_NOISE_PATTERNS:
+        cleaned = re.sub(pattern, " ", cleaned, flags=re.IGNORECASE)
+
+    cleaned = re.sub(r"\([^)]*\)", " ", cleaned)
+    cleaned = re.sub(r"\[[^\]]*\]", " ", cleaned)
+
+    if ":" in cleaned:
+        cleaned = cleaned.split(":", 1)[0]
+
+    cleaned = re.sub(r"\s+", " ", cleaned).strip(" -:/")
+    return cleaned
+
+
+def build_tmdb_search_queries(movie_name: str):
+    candidates = []
+
+    def add_candidate(value):
+        value = (value or "").strip()
+        if not value:
+            return
+
+        normalized = normalize_title_for_match(value)
+        if normalized in {normalize_title_for_match(item) for item in candidates}:
+            return
+
+        candidates.append(value)
+
+    add_candidate(movie_name)
+    add_candidate(clean_tmdb_search_title(movie_name))
+
+    return candidates
+
+
+def build_tmdb_poster_url(poster_path):
+    if not poster_path:
+        return None
+    return f"{TMDB_IMAGE_BASE}{poster_path}"
+
+
+def parse_iso_date(date_text):
+    if not date_text:
+        return None
+
+    try:
+        return datetime.date.fromisoformat(date_text[:10])
+    except ValueError:
+        return None
+
+
+def fetch_tmdb_movie_details(tmdb_movie_id, language="ko-KR"):
+    headers = get_tmdb_headers()
+    if not headers or not tmdb_movie_id:
+        return None
+
+    try:
+        response = requests.get(
+            f"{TMDB_API_BASE}/movie/{tmdb_movie_id}",
+            headers=headers,
+            params={"language": language},
+            timeout=10,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    except Exception as e:
+        print(
+            f"[TMDB] 상세 조회 실패: movie_id={tmdb_movie_id}, language={language} / {e}"
+        )
+        return None
+
+    finally:
+        time.sleep(0.2)
+
+
+def fetch_tmdb_overview(tmdb_movie_id):
+    details_ko = fetch_tmdb_movie_details(tmdb_movie_id, language="ko-KR")
+    overview_ko = (details_ko or {}).get("overview", "").strip()
+    if overview_ko:
+        return overview_ko
+
+    details_en = fetch_tmdb_movie_details(tmdb_movie_id, language="en-US")
+    overview_en = (details_en or {}).get("overview", "").strip()
+    if overview_en:
+        return overview_en
+
+    return ""
+
+
+def score_tmdb_result(item, movie_name, open_dt):
+    score = 0
+
+    target_title = normalize_title_for_match(movie_name)
+    title_candidates = [
+        normalize_title_for_match(item.get("title", "")),
+        normalize_title_for_match(item.get("original_title", "")),
+    ]
+
+    if target_title in title_candidates:
+        score += 100
+
+    for candidate in title_candidates:
+        if not candidate:
+            continue
+
+        if candidate == target_title:
+            score += 50
+        elif target_title and target_title in candidate:
+            score += 20
+
+    target_year = None
+    if open_dt:
+        try:
+            target_year = int(str(open_dt)[:4])
+        except Exception:
+            target_year = None
+
+    release_date = item.get("release_date") or ""
+    result_year = None
+    if release_date:
+        try:
+            result_year = int(release_date[:4])
+        except Exception:
+            result_year = None
+
+    if target_year and result_year:
+        diff = abs(target_year - result_year)
+        if diff == 0:
+            score += 30
+        elif diff == 1:
+            score += 15
+        elif diff <= 3:
+            score += 5
+
+    if item.get("poster_path"):
+        score += 10
+
+    popularity = item.get("popularity") or 0
+    try:
+        score += min(int(popularity), 20)
+    except Exception:
+        pass
+
+    return score
+
+
+def get_kr_release_dates(item_id):
+    headers = get_tmdb_headers()
+    if not headers:
+        return []
+
+    try:
+        response = requests.get(
+            f"{TMDB_API_BASE}/movie/{item_id}/release_dates",
+            headers=headers,
+            timeout=10,
+        )
+        response.raise_for_status()
+        data = response.json()
+    except Exception as e:
+        print(f"[TMDB] KR 개봉일 조회 실패: movie_id={item_id} / {e}")
+        return []
+    finally:
+        time.sleep(0.2)
+
+    matched_dates = []
+
+    for country in data.get("results", []):
+        if country.get("iso_3166_1") != "KR":
+            continue
+
+        for release in country.get("release_dates", []):
+            release_date = release.get("release_date")
+            if release_date:
+                matched_dates.append({
+                    "date": release_date[:10],
+                    "type": release.get("type"),
+                })
+
+    return matched_dates
+
+
+def validate_tmdb_candidate(item, open_dt):
+    target_date = parse_iso_date(open_dt)
+    item_id = item.get("id")
+
+    if not target_date or not item_id:
+        return True
+
+    kr_release_dates = get_kr_release_dates(item_id)
+    if not kr_release_dates:
+        return True
+
+    diffs = []
+    has_theatrical = False
+
+    for release in kr_release_dates:
+        parsed = parse_iso_date(release.get("date"))
+        if not parsed:
+            continue
+
+        if release.get("type") in (2, 3):
+            has_theatrical = True
+
+        diffs.append(abs((parsed - target_date).days))
+
+    if not diffs:
+        return True
+
+    closest_diff = min(diffs)
+
+    if has_theatrical and closest_diff > 45:
+        return False
+
+    if closest_diff > 120:
+        return False
+
+    return True
+
+
+def search_tmdb_movies(query, open_dt=None):
+    headers = get_tmdb_headers()
+    if not headers or not query:
+        return []
+
+    params = {
+        "query": query,
+        "language": "ko-KR",
+        "region": "KR",
+        "include_adult": "false",
+    }
+
+    try:
+        response = requests.get(
+            f"{TMDB_API_BASE}/search/movie",
+            headers=headers,
+            params=params,
+            timeout=10,
+        )
+        response.raise_for_status()
+        data = response.json()
+        return data.get("results", [])
+
+    except Exception as e:
+        print(f"[TMDB] 검색 실패: {query} / {e}")
+        return []
+
+    finally:
+        time.sleep(0.2)
+
+
+def discover_tmdb_movies(movie_name, open_dt=None):
+    headers = get_tmdb_headers()
+    if not headers:
+        return []
+
+    params = {
+        "language": "ko-KR",
+        "region": "KR",
+        "include_adult": "false",
+        "sort_by": "popularity.desc",
+        "with_release_type": "2|3",
+    }
+
+    target_date = parse_iso_date(open_dt)
+    if target_date:
+        window_start = target_date - datetime.timedelta(days=45)
+        window_end = target_date + datetime.timedelta(days=45)
+        params["release_date.gte"] = window_start.isoformat()
+        params["release_date.lte"] = window_end.isoformat()
+
+    try:
+        response = requests.get(
+            f"{TMDB_API_BASE}/discover/movie",
+            headers=headers,
+            params=params,
+            timeout=10,
+        )
+        response.raise_for_status()
+        data = response.json()
+        results = data.get("results", [])
+        query_tokens = [
+            token
+            for token in re.split(r"\s+", normalize_title_for_match(movie_name))
+            if token
+        ]
+
+        filtered = []
+        for item in results:
+            haystack = " ".join([
+                normalize_title_for_match(item.get("title", "")),
+                normalize_title_for_match(item.get("original_title", "")),
+            ])
+
+            if not query_tokens:
+                filtered.append(item)
+                continue
+
+            matched_count = sum(token in haystack for token in query_tokens)
+            if matched_count >= max(1, min(2, len(query_tokens))):
+                filtered.append(item)
+
+        return filtered
+
+    except Exception as e:
+        print(f"[TMDB] discover 실패: {movie_name} / {e}")
+        return []
+
+    finally:
+        time.sleep(0.2)
+
+
+def choose_best_tmdb_result(results, movie_name, open_dt):
+    if not results:
+        return None
+
+    scored = []
+
+    for item in results:
+        score = score_tmdb_result(item, movie_name, open_dt)
+        scored.append((score, item))
+
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+
+    for score, item in scored:
+        if score < 35:
+            continue
+
+        if validate_tmdb_candidate(item, open_dt):
+            return item
+
+    top_score, top_item = scored[0]
+    if top_score >= 70:
+        return top_item
+
+    return None
+
+
+def fetch_tmdb_best_match(movie_name, open_dt=None):
+    if not get_tmdb_headers():
+        return None
+
+    search_queries = build_tmdb_search_queries(movie_name)
+
+    for query in search_queries:
+        results = search_tmdb_movies(query, open_dt)
+        best = choose_best_tmdb_result(results, movie_name, open_dt)
+        if best:
+            return best
+
+    discover_results = discover_tmdb_movies(movie_name, open_dt)
+    return choose_best_tmdb_result(discover_results, movie_name, open_dt)
+
+
+def fetch_tmdb_kr_release_date(tmdb_movie_id):
+    release_dates = get_kr_release_dates(tmdb_movie_id)
+    if not release_dates:
+        return None
+
+    theatrical = []
+    others = []
+
+    for item in release_dates:
+        date_only = item.get("date")
+        release_type = item.get("type")
+
+        if not date_only:
+            continue
+
+        if release_type == 3:
+            theatrical.append(date_only)
+        elif release_type == 2:
+            others.append(date_only)
+        else:
+            others.append(date_only)
+
+    if theatrical:
+        return min(theatrical)
+
+    if others:
+        return min(others)
+
+    return None
+
+
+def enrich_movie_with_tmdb(movie):
+    movie_name = movie.get("movieNm", "")
+    open_dt = movie.get("openDt")
+    poster_added = False
+    overview_added = False
+
+    if not movie_name:
+        return movie
+
+    best = fetch_tmdb_best_match(movie_name, open_dt)
+    if not best:
+        return movie
+
+    if not movie.get("posterUrl"):
+        poster_url = build_tmdb_poster_url(best.get("poster_path"))
+        if poster_url:
+            movie["posterUrl"] = poster_url
+            poster_added = True
+
+    if not movie.get("overview"):
+        tmdb_id = best.get("id")
+        if tmdb_id:
+            overview = fetch_tmdb_overview(tmdb_id)
+            if overview:
+                movie["overview"] = overview
+                overview_added = True
+
+    # KOBIS 개봉일이 없을 때만 TMDB 한국 개봉일로 보완
+    if not movie.get("openDt"):
+        tmdb_id = best.get("id")
+        if tmdb_id:
+            kr_open_dt = fetch_tmdb_kr_release_date(tmdb_id)
+            if kr_open_dt:
+                movie["openDt"] = kr_open_dt
+
+    poster_mark = "O" if poster_added else "X"
+    overview_mark = "O" if overview_added else "X"
+    if poster_added or overview_added:
+        print(f"{poster_mark} | {overview_mark} | {movie_name}")
+
+    return movie
+
+
+def maybe_enrich_movie_with_tmdb(movie, excluded_ids):
+    movie_id = movie_key(movie)
+    if movie_id and movie_id in excluded_ids:
+        return movie
+
+    if movie.get("posterUrl") and movie.get("overview"):
+        return movie
+
+    return enrich_movie_with_tmdb(movie)
+
+
 def fetch_movie_page(open_start_year, open_end_year, page=1, per_page=100):
     url = "https://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieList.json"
 
@@ -43,15 +553,35 @@ def fetch_movie_page(open_start_year, open_end_year, page=1, per_page=100):
         "openEndDt": open_end_year,
     }
 
-    response = requests.get(url, params=params, timeout=30)
-    response.raise_for_status()
+    last_error = None
 
-    data = response.json()
+    for attempt in range(1, KOBIS_MAX_RETRIES + 1):
+        try:
+            response = requests.get(
+                url,
+                params=params,
+                timeout=KOBIS_TIMEOUT_SECONDS,
+            )
+            response.raise_for_status()
 
-    if "movieListResult" not in data:
-        raise Exception(f"KOBIS 오류 응답: {data}")
+            data = response.json()
 
-    return data["movieListResult"]
+            if "movieListResult" not in data:
+                raise Exception(f"KOBIS 오류 응답: {data}")
+
+            return data["movieListResult"]
+
+        except ReadTimeout as e:
+            last_error = e
+            print(
+                f"[KOBIS] 응답 지연: page={page}, 시도 {attempt}/{KOBIS_MAX_RETRIES}"
+            )
+            if attempt < KOBIS_MAX_RETRIES:
+                time.sleep(2)
+
+    raise RuntimeError(
+        f"KOBIS 응답이 지연되어 조회에 실패했습니다. 잠시 후 다시 시도해 주세요. ({last_error})"
+    )
 
 
 def fetch_all_movies(open_start_year, open_end_year):
@@ -122,6 +652,7 @@ def normalize_movie(movie, open_dt):
         "nationAlt": movie.get("nationAlt") or "미상",
         "director": director_name,
         "isReRelease": False,
+        "overview": "",
     }
 
 
@@ -161,6 +692,7 @@ def load_excluded_movies(path: Path):
                     "genreNm": "",
                     "nationAlt": "",
                     "director": "",
+                    "overview": "",
                 })
                 seen_ids.add(movie_cd)
 
@@ -174,6 +706,8 @@ def load_excluded_movies(path: Path):
                     "genreNm": item.get("genreNm", ""),
                     "nationAlt": item.get("nationAlt", ""),
                     "director": item.get("director", ""),
+                    "posterUrl": item.get("posterUrl", ""),
+                    "overview": item.get("overview", ""),
                 })
                 seen_ids.add(movie_cd)
 
@@ -190,6 +724,22 @@ def build_excluded_id_set(excluded_movies):
 
 def build_movie_map(movies):
     return {movie_key(movie): movie for movie in movies if movie_key(movie)}
+
+
+def merge_movie_metadata(existing_movie, new_movie):
+    merged = dict(existing_movie)
+
+    for field in ["posterUrl", "overview"]:
+        if not merged.get(field) and new_movie.get(field):
+            merged[field] = new_movie.get(field)
+
+    return merged
+
+
+def ensure_movie_optional_fields(movie):
+    normalized = dict(movie)
+    normalized.setdefault("overview", "")
+    return normalized
 
 
 def detect_user_deleted_ids(last_generated_movies, current_movies):
@@ -218,17 +768,23 @@ def main():
     last_generated_movies = load_json_list(LAST_GENERATED_FILE)
     manual_movies = load_json_list(MANUAL_MOVIES_FILE)
 
-    excluded_movies = load_json_list(EXCLUDED_IDS_FILE)
+    excluded_movies = load_excluded_movies(EXCLUDED_IDS_FILE)
     excluded_ids = {
-    movie.get("movieCd")
-    for movie in excluded_movies
-    if isinstance(movie, dict) and movie.get("movieCd")
+        movie.get("movieCd")
+        for movie in excluded_movies
+        if isinstance(movie, dict) and movie.get("movieCd")
     }
+
+    # manual 영화도 제외 목록이 아니면 TMDB로 포스터/개봉일 보강
+    for movie in manual_movies:
+        maybe_enrich_movie_with_tmdb(movie, excluded_ids)
+
+    save_json_list(MANUAL_MOVIES_FILE, manual_movies)
 
     # 사용자가 직접 삭제한 영화 자동 감지
     auto_detected_deleted_ids = detect_user_deleted_ids(
-    last_generated_movies,
-    current_movies,
+        last_generated_movies,
+        current_movies,
     )
 
     if auto_detected_deleted_ids:
@@ -236,6 +792,7 @@ def main():
 
     existing_excluded_ids = build_excluded_id_set(excluded_movies)
     manual_ids = {movie_key(m) for m in manual_movies}
+
     for movie in last_generated_movies:
         movie_id = movie_key(movie)
 
@@ -251,9 +808,12 @@ def main():
                 "genreNm": movie.get("genreNm", ""),
                 "nationAlt": movie.get("nationAlt", ""),
                 "director": movie.get("director", ""),
+                "posterUrl": movie.get("posterUrl", ""),
+                "overview": movie.get("overview", ""),
             })
 
     excluded_ids = build_excluded_id_set(excluded_movies)
+    current_map = build_movie_map(current_movies)
 
     # KOBIS에서 새 목록 추출
     raw_movies = fetch_all_movies(start_date.year, end_date.year)
@@ -274,6 +834,12 @@ def main():
             continue
 
         normalized = normalize_movie(movie, open_dt)
+        existing_movie = current_map.get(movie_key(normalized))
+        if existing_movie and existing_movie.get("posterUrl") and existing_movie.get("overview"):
+            normalized = merge_movie_metadata(normalized, existing_movie)
+        else:
+            normalized = maybe_enrich_movie_with_tmdb(normalized, excluded_ids)
+
         movie_cd = movie_key(normalized)
 
         if not movie_cd:
@@ -293,9 +859,6 @@ def main():
         key=lambda x: (x.get("openDt", ""), x.get("movieNm", ""))
     )
 
-    # 현재 최종 목록 기준으로 유지
-    current_map = build_movie_map(current_movies)
-
     added = []
     skipped_existing = []
 
@@ -303,12 +866,16 @@ def main():
         movie_cd = movie_key(movie)
 
         if movie_cd in current_map:
+            current_map[movie_cd] = merge_movie_metadata(
+                current_map[movie_cd],
+                movie,
+            )
             skipped_existing.append(movie)
             continue
 
         current_map[movie_cd] = movie
         added.append(movie)
-    
+
     manual_added = []
     manual_skipped = []
 
@@ -321,17 +888,26 @@ def main():
         if movie_cd in current_map:
             manual_skipped.append(movie)
 
-        current_map[movie_cd] = movie
+        existing_movie = current_map.get(movie_cd)
+        if existing_movie:
+            current_map[movie_cd] = merge_movie_metadata(existing_movie, movie)
+        else:
+            current_map[movie_cd] = movie
         manual_added.append(movie)
 
-    final_movies = list(current_map.values())
+    final_movies = [
+        ensure_movie_optional_fields(movie)
+        for movie in current_map.values()
+    ]
     final_movies.sort(key=lambda x: (x.get("openDt", ""), x.get("movieNm", "")))
 
     # 저장
     save_json_list(MOVIES_FILE, final_movies)
     save_json_list(LAST_GENERATED_FILE, newly_generated_movies)
+    save_json_list(MANUAL_MOVIES_FILE, manual_movies)
+
     excluded_movies.sort(
-    key=lambda x: (x.get("openDt", ""), x.get("movieNm", ""))
+        key=lambda x: (x.get("openDt", ""), x.get("movieNm", ""))
     )
     save_json_list(EXCLUDED_IDS_FILE, excluded_movies)
 
@@ -347,7 +923,8 @@ def main():
     if added:
         print("\n[새로 추가된 영화]")
         for movie in added[:20]:
-            print(f"- {movie.get('movieNm')} ({movie.get('openDt')})")
+            poster_mark = " [포스터]" if movie.get("posterUrl") else ""
+            print(f"- {movie.get('movieNm')} ({movie.get('openDt')}){poster_mark}")
 
     print(f"\n저장 완료 → {MOVIES_FILE}")
     print(f"자동 생성 기준 저장 → {LAST_GENERATED_FILE}")

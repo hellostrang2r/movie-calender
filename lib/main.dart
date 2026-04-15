@@ -1,10 +1,183 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
+
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 void main() {
   runApp(const ReleaseCalendarApp());
 }
+
+/// =====================================================
+/// UI CONFIG
+/// =====================================================
+
+class UIColors {
+  // App
+  static const Color scaffoldBackground = Color(0xFFF8FAFC);
+  static const Color appBarBackground = Color(0xFFFFFFFF);
+  static const Color appBarForeground = Color(0xFF111827);
+
+  // Summary
+  static const Color summaryBackground = Color(0xFFFFFFFF);
+  static const Color summaryDivider = Color(0xFFE5E7EB);
+
+  // Calendar
+  static const Color calendarCellBackground = Color(0xFFFFFFFF);
+  static const Color calendarCellBorder = Color(0xFFE5E7EB);
+  static const Color selectedCellBackground = Color(0xFFDBEAFE);
+  static const Color selectedCellBorder = Color(0xFF2563EB);
+  static const Color todayCellBackground = Color(0xFFE0F2FE);
+  static const Color todayCellBorder = Color(0xFF0284C7);
+
+  // Indicators
+  static const Color indicatorDot = Color(0xFF2563EB);
+  static const Color indicatorBadgeBackground = Color(0xFF2563EB);
+  static const Color indicatorBadgeText = Color(0xFFFFFFFF);
+
+  // Movie card
+  static const Color movieCardBackground = Color(0xFFFFFFFF);
+  static const Color moviePosterBackground = Color(0xFFF3F4F6);
+
+  // Badge
+  static const Color rereleaseBadgeBackground = Color(0xFFFDE68A);
+  static const Color rereleaseBadgeText = Color(0xFF92400E);
+
+  // Text
+  static const Color titleText = Color(0xFF111827);
+  static const Color bodyText = Color(0xFF374151);
+  static const Color subText = Color(0xFF6B7280);
+
+  // Divider / icon
+  static const Color divider = Color(0xFFE5E7EB);
+  static const Color icon = Color(0xFF374151);
+
+  // Button / loading / error
+  static const Color primaryButtonBackground = Color(0xFF2563EB);
+  static const Color primaryButtonForeground = Color(0xFFFFFFFF);
+  static const Color loadingIndicator = Color(0xFF2563EB);
+  static const Color errorIcon = Color(0xFFDC2626);
+  static const Color errorText = Color(0xFF111827);
+}
+
+class UISpacing {
+  static const double xs = 4;
+  static const double s = 8;
+  static const double m = 12;
+  static const double l = 16;
+  static const double xl = 24;
+}
+
+class UISizes {
+  static const double cardRadius = 16;
+  static const double summaryRadius = 16;
+  static const double calendarCellRadius = 16;
+  static const double movieCardRadius = 16;
+  static const double posterRadius = 10;
+  static const double badgeRadius = 999;
+
+  static const double selectedBorderWidth = 1.6;
+  static const double normalBorderWidth = 1.0;
+  static const double summaryDividerWidth = 1.0;
+
+  static const double movieListHeight = 250;
+  static const double compactMovieListRatio = 0.27;
+  static const double compactScreenHeightThreshold = 700;
+
+  static const double moviePosterWidth = 42;
+  static const double moviePosterHeight = 56;
+
+  static const double movieDotSize = 6;
+  static const double movieDotRowHeight = 14;
+  static const double movieDotSpacing = 2;
+
+  static const double errorIconSize = 40;
+  static const double loadingStrokeWidth = 3;
+}
+
+class UIText {
+  static const double appBarTitle = 18;
+  static const double monthTitle = 22;
+
+  static const double summaryLabel = 14;
+  static const double summaryValue = 18;
+
+  static const double weekday = 14;
+  static const double dayNumber = 13;
+  static const double indicatorBadge = 9;
+
+  static const double selectedDateTitle = 16;
+  static const double movieTitle = 15;
+  static const double movieMeta = 13;
+  static const double movieDirector = 12;
+  static const double badge = 12;
+
+  static const double emptyText = 14;
+  static const double errorText = 14;
+  static const double retryButton = 14;
+
+  static const FontWeight appBarTitleWeight = FontWeight.w700;
+  static const FontWeight monthTitleWeight = FontWeight.w700;
+  static const FontWeight summaryLabelWeight = FontWeight.w500;
+  static const FontWeight summaryValueWeight = FontWeight.w700;
+  static const FontWeight weekdayWeight = FontWeight.w700;
+  static const FontWeight dayNumberWeight = FontWeight.w700;
+  static const FontWeight selectedDateTitleWeight = FontWeight.w700;
+  static const FontWeight movieTitleWeight = FontWeight.w700;
+  static const FontWeight badgeWeight = FontWeight.w700;
+  static const FontWeight indicatorBadgeWeight = FontWeight.bold;
+  static const FontWeight retryButtonWeight = FontWeight.w600;
+}
+
+class UILayout {
+  static const double pageHorizontalPadding = 16;
+
+  static const double monthHeaderLeft = 8;
+  static const double monthHeaderTop = 8;
+  static const double monthHeaderRight = 8;
+  static const double monthHeaderBottom = 4;
+
+  static const double weekdayHorizontalPadding = 12;
+  static const double calendarHorizontalPadding = 12;
+  static const double calendarTopPadding = 8;
+
+  static const double calendarMainAxisSpacing = 8;
+  static const double calendarCrossAxisSpacing = 8;
+
+  static const double selectedListLeft = 16;
+  static const double selectedListTop = 12;
+  static const double selectedListRight = 16;
+  static const double selectedListBottom = 16;
+}
+
+class UICalendar {
+  static const double cellPaddingHorizontal = 4;
+  static const double cellPaddingVertical = 5;
+  static const double weekdayVerticalPadding = 5;
+}
+
+class UIMovieCard {
+  static const double padding = 12;
+  static const double gapBetweenPosterAndText = 12;
+}
+
+class UIBadge {
+  static const double horizontalPadding = 8;
+  static const double verticalPadding = 4;
+}
+
+class UIAdaptive {
+  static const bool enableSwipeMonth = true;
+}
+
+class UIAnimation {
+  static const Duration pageDuration = Duration(milliseconds: 280);
+  static const Curve pageCurve = Curves.easeInOut;
+}
+
+/// =====================================================
+/// APP
+/// =====================================================
 
 class ReleaseCalendarApp extends StatelessWidget {
   const ReleaseCalendarApp({super.key});
@@ -15,8 +188,21 @@ class ReleaseCalendarApp extends StatelessWidget {
       title: 'Movie Release Calendar',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.redAccent),
         useMaterial3: true,
+        scaffoldBackgroundColor: UIColors.scaffoldBackground,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: UIColors.appBarBackground,
+          foregroundColor: UIColors.appBarForeground,
+          centerTitle: true,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          titleTextStyle: TextStyle(
+            color: UIColors.appBarForeground,
+            fontSize: UIText.appBarTitle,
+            fontWeight: UIText.appBarTitleWeight,
+          ),
+          iconTheme: IconThemeData(color: UIColors.icon),
+        ),
       ),
       home: const ReleaseCalendarPage(),
     );
@@ -31,15 +217,21 @@ class ReleaseCalendarPage extends StatefulWidget {
 }
 
 class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
-  final MovieRepository repository = GithubMovieRepository();
+  final MovieRepository repository = (kDebugMode && !kIsWeb)
+      ? LocalMovieRepository()
+      : GithubMovieRepository();
 
   late DateTime focusedMonth;
   late DateTime selectedDate;
+  late final PageController _pageController;
+
   bool isLoading = true;
   String? errorMessage;
 
   List<Movie> monthMovies = [];
   Map<DateTime, List<Movie>> moviesByDate = {};
+
+  static const int _initialPage = 1200;
 
   @override
   void initState() {
@@ -47,41 +239,14 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
     final now = DateTime.now();
     focusedMonth = DateTime(now.year, now.month);
     selectedDate = DateTime(now.year, now.month, now.day);
+    _pageController = PageController(initialPage: _initialPage);
     _loadMonth(focusedMonth);
   }
 
-  Future<void> _loadMonth(DateTime month) async {
-    setState(() {
-      isLoading = true;
-      errorMessage = null;
-    });
-
-    try {
-      final firstDay = DateTime(month.year, month.month, 1);
-      final lastDay = DateTime(month.year, month.month + 1, 0);
-
-      final movies = await repository.fetchMoviesByMonth(firstDay, lastDay);
-      final grouped = _groupMoviesByDate(movies);
-
-      setState(() {
-        focusedMonth = firstDay;
-        monthMovies = movies;
-        moviesByDate = grouped;
-
-        final normalizedSelected = _normalizeDate(selectedDate);
-        if (normalizedSelected.month != focusedMonth.month ||
-            normalizedSelected.year != focusedMonth.year) {
-          selectedDate = firstDay;
-        }
-
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        errorMessage = '영화 개봉 정보를 불러오지 못했습니다.\n$e';
-        isLoading = false;
-      });
-    }
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   Map<DateTime, List<Movie>> _groupMoviesByDate(List<Movie> movies) {
@@ -99,25 +264,96 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
     return map;
   }
 
-  DateTime _normalizeDate(DateTime date) =>
-      DateTime(date.year, date.month, date.day);
+  DateTime _normalizeDate(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
 
-  List<Movie> get selectedMovies =>
-      moviesByDate[_normalizeDate(selectedDate)] ?? const [];
+  List<Movie> get selectedMovies {
+    return moviesByDate[_normalizeDate(selectedDate)] ?? const [];
+  }
 
-  void _goToPreviousMonth() {
-    _loadMonth(DateTime(focusedMonth.year, focusedMonth.month - 1, 1));
+  int get releaseCount =>
+      monthMovies.where((movie) => !movie.isReRelease).length;
+  int get reReleaseCount =>
+      monthMovies.where((movie) => movie.isReRelease).length;
+
+  DateTime _monthFromPage(int page) {
+    final diff = page - _initialPage;
+    return DateTime(focusedMonth.year, focusedMonth.month + diff, 1);
+  }
+
+  Future<void> _loadMonth(DateTime month) async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final firstDay = DateTime(month.year, month.month, 1);
+      final lastDay = DateTime(month.year, month.month + 1, 0);
+
+      final movies = await repository.fetchMoviesByMonth(firstDay, lastDay);
+      final grouped = _groupMoviesByDate(movies);
+
+      if (!mounted) return;
+
+      setState(() {
+        focusedMonth = firstDay;
+        monthMovies = movies;
+        moviesByDate = grouped;
+
+        final normalizedSelected = _normalizeDate(selectedDate);
+        if (normalizedSelected.year != firstDay.year ||
+            normalizedSelected.month != firstDay.month) {
+          selectedDate = firstDay;
+        }
+
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        errorMessage = '영화 개봉 정보를 불러오지 못했습니다.\n$e';
+        isLoading = false;
+      });
+    }
   }
 
   void _goToNextMonth() {
-    _loadMonth(DateTime(focusedMonth.year, focusedMonth.month + 1, 1));
+    if (!_pageController.hasClients) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_pageController.hasClients) return;
+
+      _pageController.nextPage(
+        duration: UIAnimation.pageDuration,
+        curve: UIAnimation.pageCurve,
+      );
+    });
+  }
+
+  void _goToPreviousMonth() {
+    if (!_pageController.hasClients) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_pageController.hasClients) return;
+
+      _pageController.previousPage(
+        duration: UIAnimation.pageDuration,
+        curve: UIAnimation.pageCurve,
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final movieListHeight = screenHeight < UISizes.compactScreenHeightThreshold
+        ? screenHeight * UISizes.compactMovieListRatio
+        : UISizes.movieListHeight;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('영화 개봉 캘린더'), centerTitle: true),
+      appBar: AppBar(title: const Text('영화 개봉 캘린더')),
       body: SafeArea(
         child: Column(
           children: [
@@ -127,16 +363,18 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
               onNext: _goToNextMonth,
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(
+                horizontal: UILayout.pageHorizontalPadding,
+              ),
               child: _MonthSummary(
-                movieCount: monthMovies.length,
-                releaseDayCount: moviesByDate.length,
+                releaseCount: releaseCount,
+                reReleaseCount: reReleaseCount,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: UISpacing.s),
             Expanded(
               child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const _LoadingState()
                   : errorMessage != null
                   ? _ErrorState(
                       message: errorMessage!,
@@ -145,32 +383,75 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
                   : Column(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: _WeekdayHeader(),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: UILayout.weekdayHorizontalPadding,
+                          ),
+                          child: const _WeekdayHeader(),
                         ),
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                            child: _CalendarGrid(
-                              focusedMonth: focusedMonth,
-                              selectedDate: selectedDate,
-                              moviesByDate: moviesByDate,
-                              onDateSelected: (date) {
-                                setState(() {
-                                  selectedDate = date;
-                                });
-                              },
+                            padding: const EdgeInsets.fromLTRB(
+                              UILayout.calendarHorizontalPadding,
+                              UILayout.calendarTopPadding,
+                              UILayout.calendarHorizontalPadding,
+                              0,
                             ),
+                            child: UIAdaptive.enableSwipeMonth
+                                ? PageView.builder(
+                                    controller: _pageController,
+                                    onPageChanged: (page) {
+                                      final month = _monthFromPage(page);
+                                      _loadMonth(month);
+                                    },
+                                    itemBuilder: (context, page) {
+                                      final month = _monthFromPage(page);
+                                      return _CalendarGrid(
+                                        focusedMonth: month,
+                                        selectedDate: selectedDate,
+                                        moviesByDate: moviesByDate,
+                                        onDateSelected: (date) {
+                                          setState(() {
+                                            selectedDate = date;
+                                          });
+                                        },
+                                      );
+                                    },
+                                  )
+                                : _CalendarGrid(
+                                    focusedMonth: focusedMonth,
+                                    selectedDate: selectedDate,
+                                    moviesByDate: moviesByDate,
+                                    onDateSelected: (date) {
+                                      setState(() {
+                                        selectedDate = date;
+                                      });
+                                    },
+                                  ),
                           ),
                         ),
-                        const Divider(height: 1),
+                        Container(
+                          height: UISizes.summaryDividerWidth,
+                          color: UIColors.divider,
+                        ),
                         SizedBox(
-                          height: screenHeight < 700
-                              ? screenHeight * 0.22
-                              : 220,
+                          height: movieListHeight,
                           child: _SelectedDateMovieList(
                             selectedDate: selectedDate,
                             movies: selectedMovies,
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'This product uses the TMDB API but is not endorsed or certified by TMDB.\n데이터 출처: 영화진흥위원회 KOBIS',
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: 11,
+                                height: 1.4,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -197,7 +478,12 @@ class _MonthHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+      padding: const EdgeInsets.fromLTRB(
+        UILayout.monthHeaderLeft,
+        UILayout.monthHeaderTop,
+        UILayout.monthHeaderRight,
+        UILayout.monthHeaderBottom,
+      ),
       child: Row(
         children: [
           IconButton(
@@ -208,9 +494,11 @@ class _MonthHeader extends StatelessWidget {
             child: Center(
               child: Text(
                 '${focusedMonth.year}년 ${focusedMonth.month}월',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: UIColors.titleText,
+                  fontSize: UIText.monthTitle,
+                  fontWeight: UIText.monthTitleWeight,
+                ),
               ),
             ),
           ),
@@ -223,30 +511,45 @@ class _MonthHeader extends StatelessWidget {
 
 class _MonthSummary extends StatelessWidget {
   const _MonthSummary({
-    required this.movieCount,
-    required this.releaseDayCount,
+    required this.releaseCount,
+    required this.reReleaseCount,
   });
 
-  final int movieCount;
-  final int releaseDayCount;
+  final int releaseCount;
+  final int reReleaseCount;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: UISpacing.l,
+        vertical: UISpacing.s,
+      ),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
+        color: UIColors.summaryBackground,
+        borderRadius: BorderRadius.circular(UISizes.summaryRadius),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Expanded(
-            child: _SummaryItem(label: '이번 달 개봉작', value: '$movieCount편'),
+          Text(
+            '개봉 $releaseCount편',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
-          Container(width: 1, height: 36, color: Colors.black12),
-          Expanded(
-            child: _SummaryItem(label: '개봉일 있는 날짜', value: '$releaseDayCount일'),
+          const SizedBox(width: 12),
+
+          Container(width: 1, height: 16, color: Colors.black12),
+
+          const SizedBox(width: 12),
+
+          Text(
+            '재개봉 $reReleaseCount편',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -254,31 +557,10 @@ class _MonthSummary extends StatelessWidget {
   }
 }
 
-class _SummaryItem extends StatelessWidget {
-  const _SummaryItem({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(label, style: Theme.of(context).textTheme.bodyMedium),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
-  }
-}
-
 class _WeekdayHeader extends StatelessWidget {
-  final List<String> labels = const ['일', '월', '화', '수', '목', '금', '토'];
+  const _WeekdayHeader();
+
+  static const List<String> labels = ['일', '월', '화', '수', '목', '금', '토'];
 
   @override
   Widget build(BuildContext context) {
@@ -288,11 +570,15 @@ class _WeekdayHeader extends StatelessWidget {
             (label) => Expanded(
               child: Center(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: UICalendar.weekdayVerticalPadding,
+                  ),
                   child: Text(
                     label,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                    style: const TextStyle(
+                      color: UIColors.bodyText,
+                      fontSize: UIText.weekday,
+                      fontWeight: UIText.weekdayWeight,
                     ),
                   ),
                 ),
@@ -317,8 +603,9 @@ class _CalendarGrid extends StatelessWidget {
   final Map<DateTime, List<Movie>> moviesByDate;
   final ValueChanged<DateTime> onDateSelected;
 
-  DateTime _normalize(DateTime date) =>
-      DateTime(date.year, date.month, date.day);
+  DateTime _normalize(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -334,12 +621,13 @@ class _CalendarGrid extends StatelessWidget {
     final cellCount = rowCount * 7;
 
     return GridView.builder(
-      physics: const NeverScrollableScrollPhysics(),
+      physics: const BouncingScrollPhysics(),
+      shrinkWrap: true,
       itemCount: cellCount,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 7,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
+        mainAxisSpacing: UILayout.calendarMainAxisSpacing,
+        crossAxisSpacing: UILayout.calendarCrossAxisSpacing,
       ),
       itemBuilder: (context, index) {
         if (index < leadingEmptyCount ||
@@ -350,16 +638,14 @@ class _CalendarGrid extends StatelessWidget {
         final day = index - leadingEmptyCount + 1;
         final date = DateTime(focusedMonth.year, focusedMonth.month, day);
         final normalized = _normalize(date);
-        final movieCount = moviesByDate[normalized]?.length ?? 0;
 
+        final movieCount = moviesByDate[normalized]?.length ?? 0;
         final today = _normalize(DateTime.now());
-        final isToday = normalized == today;
-        final isSelected = normalized == _normalize(selectedDate);
 
         return _DayCell(
           date: date,
-          isToday: isToday,
-          isSelected: isSelected,
+          isToday: normalized == today,
+          isSelected: normalized == _normalize(selectedDate),
           movieCount: movieCount,
           onTap: () => onDateSelected(date),
         );
@@ -385,43 +671,48 @@ class _DayCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    Color borderColor = Colors.transparent;
-    Color backgroundColor = colorScheme.surface;
+    Color backgroundColor = UIColors.calendarCellBackground;
+    Color borderColor = UIColors.calendarCellBorder;
+    double borderWidth = UISizes.normalBorderWidth;
 
     if (isSelected) {
-      backgroundColor = colorScheme.primaryContainer;
-      borderColor = colorScheme.primary;
+      backgroundColor = UIColors.selectedCellBackground;
+      borderColor = UIColors.selectedCellBorder;
+      borderWidth = UISizes.selectedBorderWidth;
     } else if (isToday) {
-      backgroundColor = colorScheme.secondaryContainer;
-      borderColor = colorScheme.secondary;
+      backgroundColor = UIColors.todayCellBackground;
+      borderColor = UIColors.todayCellBorder;
+      borderWidth = UISizes.selectedBorderWidth;
     }
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(UISizes.calendarCellRadius),
         onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: borderColor,
-              width: isSelected || isToday ? 1.6 : 1,
-            ),
+            borderRadius: BorderRadius.circular(UISizes.calendarCellRadius),
+            border: Border.all(color: borderColor, width: borderWidth),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          padding: const EdgeInsets.symmetric(
+            horizontal: UICalendar.cellPaddingHorizontal,
+            vertical: UICalendar.cellPaddingVertical,
+          ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 '${date.day}',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  color: UIColors.titleText,
+                  fontSize: UIText.dayNumber,
+                  fontWeight: UIText.dayNumberWeight,
+                  height: 1.0,
+                ),
               ),
+              const SizedBox(height: 5),
               _MovieIndicator(movieCount: movieCount),
             ],
           ),
@@ -439,7 +730,7 @@ class _MovieIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (movieCount <= 0) {
-      return const SizedBox(height: 14);
+      return const SizedBox(height: UISizes.movieDotRowHeight);
     }
 
     if (movieCount == 1) {
@@ -451,17 +742,17 @@ class _MovieIndicator extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary,
-        borderRadius: BorderRadius.circular(999),
+        color: UIColors.indicatorBadgeBackground,
+        borderRadius: BorderRadius.circular(UISizes.badgeRadius),
       ),
       child: Text(
         '+$movieCount',
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.onPrimary,
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
+        style: const TextStyle(
+          color: UIColors.indicatorBadgeText,
+          fontSize: UIText.indicatorBadge,
+          fontWeight: UIText.indicatorBadgeWeight,
         ),
       ),
     );
@@ -476,17 +767,19 @@ class _DotRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 14,
+      height: UISizes.movieDotRowHeight,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(
           dotCount,
           (index) => Container(
-            width: 6,
-            height: 6,
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
+            width: UISizes.movieDotSize,
+            height: UISizes.movieDotSize,
+            margin: const EdgeInsets.symmetric(
+              horizontal: UISizes.movieDotSpacing,
+            ),
+            decoration: const BoxDecoration(
+              color: UIColors.indicatorDot,
               shape: BoxShape.circle,
             ),
           ),
@@ -508,31 +801,42 @@ class _SelectedDateMovieList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      padding: const EdgeInsets.fromLTRB(
+        UILayout.selectedListLeft,
+        UILayout.selectedListTop,
+        UILayout.selectedListRight,
+        UILayout.selectedListBottom,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             '${selectedDate.year}.${selectedDate.month.toString().padLeft(2, '0')}.${selectedDate.day.toString().padLeft(2, '0')} 개봉',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: UIColors.titleText,
+              fontSize: UIText.selectedDateTitle,
+              fontWeight: UIText.selectedDateTitleWeight,
+            ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: UISpacing.s),
           Expanded(
             child: movies.isEmpty
-                ? Center(
+                ? const Center(
                     child: Text(
                       '이 날짜에 등록된 개봉작이 없습니다.',
-                      style: Theme.of(context).textTheme.bodyLarge,
+                      style: TextStyle(
+                        color: UIColors.bodyText,
+                        fontSize: UIText.emptyText,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   )
                 : ListView.separated(
                     itemCount: movies.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: UISpacing.s),
                     itemBuilder: (context, index) {
-                      final movie = movies[index];
-                      return _MovieTile(movie: movie);
+                      return _MovieTile(movie: movies[index]);
                     },
                   ),
           ),
@@ -550,59 +854,83 @@ class _MovieTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(UIMovieCard.padding),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
+        color: UIColors.movieCardBackground,
+        borderRadius: BorderRadius.circular(UISizes.movieCardRadius),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 42,
-            height: 56,
+            width: UISizes.moviePosterWidth,
+            height: UISizes.moviePosterHeight,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(10),
+              color: UIColors.moviePosterBackground,
+              borderRadius: BorderRadius.circular(UISizes.posterRadius),
             ),
-            alignment: Alignment.center,
-            child: const Icon(Icons.movie_outlined),
+            clipBehavior: Clip.antiAlias,
+            child: movie.posterUrl != null && movie.posterUrl!.isNotEmpty
+                ? Image.network(
+                    movie.posterUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(
+                        child: Icon(Icons.movie_outlined, color: UIColors.icon),
+                      );
+                    },
+                  )
+                : const Center(
+                    child: Icon(Icons.movie_outlined, color: UIColors.icon),
+                  ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: UIMovieCard.gapBetweenPosterAndText),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   movie.title,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: UIColors.titleText,
+                    fontSize: UIText.movieTitle,
+                    fontWeight: UIText.movieTitleWeight,
+                  ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: UISpacing.xs),
                 Text(
                   '${movie.genre} · ${movie.nation}',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: const TextStyle(
+                    color: UIColors.bodyText,
+                    fontSize: UIText.movieMeta,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '감독 ${movie.director}',
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: const TextStyle(
+                    color: UIColors.subText,
+                    fontSize: UIText.movieDirector,
+                  ),
                 ),
                 if (movie.isReRelease) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: UISpacing.s),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: UIBadge.horizontalPadding,
+                      vertical: UIBadge.verticalPadding,
                     ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.tertiaryContainer,
-                      borderRadius: BorderRadius.circular(999),
+                      color: UIColors.rereleaseBadgeBackground,
+                      borderRadius: BorderRadius.circular(UISizes.badgeRadius),
                     ),
-                    child: Text(
+                    child: const Text(
                       '재개봉',
-                      style: Theme.of(context).textTheme.labelMedium,
+                      style: TextStyle(
+                        color: UIColors.rereleaseBadgeText,
+                        fontSize: UIText.badge,
+                        fontWeight: UIText.badgeWeight,
+                      ),
                     ),
                   ),
                 ],
@@ -625,21 +953,67 @@ class _ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(UISpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 40),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            FilledButton(onPressed: onRetry, child: const Text('다시 시도')),
+            const Icon(
+              Icons.error_outline,
+              size: UISizes.errorIconSize,
+              color: UIColors.errorIcon,
+            ),
+            const SizedBox(height: UISpacing.m),
+            Text(
+              message,
+              style: const TextStyle(
+                color: UIColors.errorText,
+                fontSize: UIText.errorText,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: UISpacing.m),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: UIColors.primaryButtonBackground,
+                foregroundColor: UIColors.primaryButtonForeground,
+              ),
+              onPressed: onRetry,
+              child: const Text(
+                '다시 시도',
+                style: TextStyle(
+                  fontSize: UIText.retryButton,
+                  fontWeight: UIText.retryButtonWeight,
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 }
+
+class _LoadingState extends StatelessWidget {
+  const _LoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: SizedBox(
+        width: 32,
+        height: 32,
+        child: CircularProgressIndicator(
+          strokeWidth: UISizes.loadingStrokeWidth,
+          valueColor: AlwaysStoppedAnimation<Color>(UIColors.loadingIndicator),
+        ),
+      ),
+    );
+  }
+}
+
+/// =====================================================
+/// MODEL / REPOSITORY
+/// =====================================================
 
 class Movie {
   const Movie({
@@ -650,6 +1024,7 @@ class Movie {
     required this.nation,
     required this.director,
     this.isReRelease = false,
+    this.posterUrl,
   });
 
   final String movieCd;
@@ -659,6 +1034,7 @@ class Movie {
   final String nation;
   final String director;
   final bool isReRelease;
+  final String? posterUrl;
 }
 
 abstract class MovieRepository {
@@ -778,38 +1154,6 @@ class MockMovieRepository implements MovieRepository {
   }
 }
 
-/// KOBIS 연동 시 교체 예시
-///
-/// 1. 이 Repository를 실제 구현으로 바꿉니다.
-/// 2. 앱에서 직접 KOBIS를 호출하지 말고, 중간 백엔드를 두는 것을 권장합니다.
-/// 3. 백엔드는 월 범위를 받아 정제된 JSON을 반환하면 됩니다.
-///
-/// class KobisMovieRepository implements MovieRepository {
-///   final Dio dio;
-///   KobisMovieRepository(this.dio);
-///
-///   @override
-///   Future<List<Movie>> fetchMoviesByMonth(DateTime firstDay, DateTime lastDay) async {
-///     final response = await dio.get(
-///       'https://your-backend.example.com/releases',
-///       queryParameters: {
-///         'startDate': _formatDate(firstDay),
-///         'endDate': _formatDate(lastDay),
-///       },
-///     );
-///
-///     final list = response.data as List<dynamic>;
-///     return list.map((json) => Movie(
-///       movieCd: json['movieCd'] as String,
-///       title: json['movieNm'] as String,
-///       openDate: DateTime.parse(json['openDt'] as String),
-///       genre: json['genreNm'] as String? ?? '기타',
-///       nation: json['nationAlt'] as String? ?? '미상',
-///       director: json['director'] as String? ?? '정보 없음',
-///       isReRelease: json['isReRelease'] as bool? ?? false,
-///     )).toList();
-///   }
-/// }
 class GithubMovieRepository implements MovieRepository {
   final String url =
       'https://raw.githubusercontent.com/hellostrang2r/movie-calendar/main/data/movies.json';
@@ -838,6 +1182,51 @@ class GithubMovieRepository implements MovieRepository {
         nation: json['nationAlt'] as String? ?? '미상',
         director: json['director'] as String? ?? '정보 없음',
         isReRelease: json['isReRelease'] as bool? ?? false,
+        posterUrl: json['posterUrl'] as String?,
+      );
+    }).toList();
+
+    return movies.where((movie) {
+      final d = movie.openDate;
+      final afterOrSame = !d.isBefore(
+        DateTime(firstDay.year, firstDay.month, firstDay.day),
+      );
+      final beforeOrSame = !d.isAfter(
+        DateTime(lastDay.year, lastDay.month, lastDay.day),
+      );
+      return afterOrSame && beforeOrSame;
+    }).toList();
+  }
+}
+
+class LocalMovieRepository implements MovieRepository {
+  @override
+  Future<List<Movie>> fetchMoviesByMonth(
+    DateTime firstDay,
+    DateTime lastDay,
+  ) async {
+    final response = await http.get(
+      Uri.parse(
+        'http://localhost:8000/data/movies.json?t=${DateTime.now().millisecondsSinceEpoch}',
+      ),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('로컬 영화 데이터를 불러오지 못했습니다.');
+    }
+
+    final List<dynamic> data = jsonDecode(response.body);
+
+    final movies = data.map((json) {
+      return Movie(
+        movieCd: json['movieCd'] as String,
+        title: json['movieNm'] as String,
+        openDate: DateTime.parse(json['openDt'] as String),
+        genre: json['genreNm'] as String? ?? '기타',
+        nation: json['nationAlt'] as String? ?? '미상',
+        director: json['director'] as String? ?? '정보 없음',
+        isReRelease: json['isReRelease'] as bool? ?? false,
+        posterUrl: json['posterUrl'] as String?,
       );
     }).toList();
 
