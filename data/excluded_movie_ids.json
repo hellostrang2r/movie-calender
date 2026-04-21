@@ -558,5 +558,16 @@
     "director": "정보 없음",
     "posterUrl": "",
     "overview": ""
+  },
+  {
+    "movieCd": "20259791",
+    "movieNm": "악마는 프라다를 입는다 2",
+    "openDt": "2026-04-29",
+    "genreNm": "",
+    "nationAlt": "미국",
+    "director": "데이빗 프랭클",
+    "isReRelease": false,
+    "overview": "전 세계 트렌드를 주도해 온 전설적인 패션 매거진 ‘런웨이’가 급변하는 미디어 시장 속에서 예기치 못한 위기에 직면한다. ‘런웨이’를 지켜내려는 편집장 ‘미란다’와 20년 만에 신임 기획 에디터로 당당히 돌아온 ‘앤디’, 그리고 이제는 럭셔리 브랜드 임원이 되어 다시 나타난 ‘에밀리’까지 더 화려하고, 치열해진 뉴욕 패션계에서 주도권을 차지하기 위해 벌이는 이들의 새로운 이야기가 펼쳐진다!",
+    "posterUrl": "https://image.tmdb.org/t/p/w500/28A1VUDML1RzENYNtIU1WkBLT9V.jpg"
   }
 ]
