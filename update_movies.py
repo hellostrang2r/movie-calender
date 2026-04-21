@@ -179,6 +179,28 @@ def fetch_tmdb_movie_details(tmdb_movie_id, language="ko-KR"):
         time.sleep(0.2)
 
 
+def fetch_tmdb_movie_credits(tmdb_movie_id):
+    headers = get_tmdb_headers()
+    if not headers or not tmdb_movie_id:
+        return None
+
+    try:
+        response = requests.get(
+            f"{TMDB_API_BASE}/movie/{tmdb_movie_id}/credits",
+            headers=headers,
+            timeout=10,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    except Exception as e:
+        print(f"[TMDB] 크레딧 조회 실패: movie_id={tmdb_movie_id} / {e}")
+        return None
+
+    finally:
+        time.sleep(0.2)
+
+
 def fetch_tmdb_overview(tmdb_movie_id):
     details_ko = fetch_tmdb_movie_details(tmdb_movie_id, language="ko-KR")
     overview_ko = (details_ko or {}).get("overview", "").strip()
@@ -214,6 +236,39 @@ def fetch_tmdb_genres(tmdb_movie_id):
 
     details_en = fetch_tmdb_movie_details(tmdb_movie_id, language="en-US")
     return extract_tmdb_genre_names(details_en)
+
+
+def extract_tmdb_director_names(credits):
+    crew = (credits or {}).get("crew", [])
+    if not isinstance(crew, list):
+        return ""
+
+    names = []
+    seen = set()
+
+    for person in crew:
+        if not isinstance(person, dict):
+            continue
+
+        job = person.get("job", "")
+        name = person.get("name", "").strip()
+        if job != "Director" or not name or name in seen:
+            continue
+
+        names.append(name)
+        seen.add(name)
+
+    return ",".join(names)
+
+
+def fetch_tmdb_directors(tmdb_movie_id):
+    credits = fetch_tmdb_movie_credits(tmdb_movie_id)
+    return extract_tmdb_director_names(credits)
+
+
+def is_missing_director(movie):
+    director = (movie.get("director") or "").strip()
+    return not director or director == "정보 없음"
 
 
 def score_tmdb_result(item, movie_name, open_dt):
@@ -518,6 +573,7 @@ def enrich_movie_with_tmdb(movie):
     poster_added = False
     overview_added = False
     genre_added = False
+    director_added = False
 
     if not movie_name:
         return movie
@@ -548,6 +604,14 @@ def enrich_movie_with_tmdb(movie):
                 movie["genreNm"] = genres
                 genre_added = True
 
+    if is_missing_director(movie):
+        tmdb_id = best.get("id")
+        if tmdb_id:
+            directors = fetch_tmdb_directors(tmdb_id)
+            if directors:
+                movie["director"] = directors
+                director_added = True
+
     # KOBIS 개봉일이 없을 때만 TMDB 한국 개봉일로 보완
     if not movie.get("openDt"):
         tmdb_id = best.get("id")
@@ -559,8 +623,11 @@ def enrich_movie_with_tmdb(movie):
     poster_mark = "O" if poster_added else "X"
     overview_mark = "O" if overview_added else "X"
     genre_mark = "O" if genre_added else "X"
-    if poster_added or overview_added or genre_added:
-        print(f"{poster_mark} | {overview_mark} | {genre_mark} | {movie_name}")
+    director_mark = "O" if director_added else "X"
+    if poster_added or overview_added or genre_added or director_added:
+        print(
+            f"{poster_mark} | {overview_mark} | {genre_mark} | {director_mark} | {movie_name}"
+        )
 
     return movie
 
@@ -570,7 +637,12 @@ def maybe_enrich_movie_with_tmdb(movie, excluded_ids):
     if movie_id and movie_id in excluded_ids:
         return movie
 
-    if movie.get("posterUrl") and movie.get("overview") and movie.get("genreNm"):
+    if (
+        movie.get("posterUrl")
+        and movie.get("overview")
+        and movie.get("genreNm")
+        and not is_missing_director(movie)
+    ):
         return movie
 
     return enrich_movie_with_tmdb(movie)
@@ -780,9 +852,12 @@ def build_movie_map(movies):
 def merge_movie_metadata(existing_movie, new_movie):
     merged = dict(existing_movie)
 
-    for field in ["posterUrl", "overview"]:
+    for field in ["posterUrl", "overview", "genreNm"]:
         if not merged.get(field) and new_movie.get(field):
             merged[field] = new_movie.get(field)
+
+    if is_missing_director(merged) and not is_missing_director(new_movie):
+        merged["director"] = new_movie.get("director")
 
     return merged
 
