@@ -230,6 +230,7 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
   late final PageController _pageController;
 
   bool isLoading = true;
+  bool isMovieListVisible = true;
   String? errorMessage;
 
   List<Movie> monthMovies = [];
@@ -276,6 +277,20 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
     return moviesByDate[_normalizeDate(selectedDate)] ?? const [];
   }
 
+  void _handleDateSelected(DateTime date) {
+    final normalizedSelected = _normalizeDate(selectedDate);
+    final normalizedDate = _normalizeDate(date);
+
+    setState(() {
+      if (normalizedSelected == normalizedDate) {
+        isMovieListVisible = !isMovieListVisible;
+      } else {
+        selectedDate = date;
+        isMovieListVisible = true;
+      }
+    });
+  }
+
   int get releaseCount =>
       monthMovies.where((movie) => !movie.isReRelease).length;
   int get reReleaseCount =>
@@ -310,6 +325,7 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
         if (normalizedSelected.year != firstDay.year ||
             normalizedSelected.month != firstDay.month) {
           selectedDate = firstDay;
+          isMovieListVisible = true;
         }
 
         isLoading = false;
@@ -413,11 +429,7 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
                                         focusedMonth: month,
                                         selectedDate: selectedDate,
                                         moviesByDate: moviesByDate,
-                                        onDateSelected: (date) {
-                                          setState(() {
-                                            selectedDate = date;
-                                          });
-                                        },
+                                        onDateSelected: _handleDateSelected,
                                       );
                                     },
                                   )
@@ -425,25 +437,23 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
                                     focusedMonth: focusedMonth,
                                     selectedDate: selectedDate,
                                     moviesByDate: moviesByDate,
-                                    onDateSelected: (date) {
-                                      setState(() {
-                                        selectedDate = date;
-                                      });
-                                    },
+                                    onDateSelected: _handleDateSelected,
                                   ),
                           ),
                         ),
-                        Container(
-                          height: UISizes.summaryDividerWidth,
-                          color: UIColors.divider,
-                        ),
-                        SizedBox(
-                          height: movieListHeight,
-                          child: _SelectedDateMovieList(
-                            selectedDate: selectedDate,
-                            movies: selectedMovies,
+                        if (isMovieListVisible) ...[
+                          Container(
+                            height: UISizes.summaryDividerWidth,
+                            color: UIColors.divider,
                           ),
-                        ),
+                          SizedBox(
+                            height: movieListHeight,
+                            child: _SelectedDateMovieList(
+                              selectedDate: selectedDate,
+                              movies: selectedMovies,
+                            ),
+                          ),
+                        ],
                         const Padding(
                           padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
                           child: Align(
@@ -814,13 +824,26 @@ class _SelectedDateMovieList extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${selectedDate.year}.${selectedDate.month.toString().padLeft(2, '0')}.${selectedDate.day.toString().padLeft(2, '0')} 개봉',
-            style: const TextStyle(
-              color: UIColors.titleText,
-              fontSize: UIText.selectedDateTitle,
-              fontWeight: UIText.selectedDateTitleWeight,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${selectedDate.year}.${selectedDate.month.toString().padLeft(2, '0')}.${selectedDate.day.toString().padLeft(2, '0')} 개봉작',
+                  style: const TextStyle(
+                    color: UIColors.titleText,
+                    fontSize: UIText.selectedDateTitle,
+                    fontWeight: UIText.selectedDateTitleWeight,
+                  ),
+                ),
+              ),
+              const Text(
+                '클릭시 상세정보',
+                style: TextStyle(
+                  color: UIColors.subText,
+                  fontSize: UIText.movieDirector,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: UISpacing.s),
           Expanded(

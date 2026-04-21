@@ -193,6 +193,29 @@ def fetch_tmdb_overview(tmdb_movie_id):
     return ""
 
 
+def extract_tmdb_genre_names(details):
+    genres = (details or {}).get("genres", [])
+    if not isinstance(genres, list):
+        return ""
+
+    names = [
+        genre.get("name", "").strip()
+        for genre in genres
+        if isinstance(genre, dict) and genre.get("name")
+    ]
+    return ",".join(names)
+
+
+def fetch_tmdb_genres(tmdb_movie_id):
+    details_ko = fetch_tmdb_movie_details(tmdb_movie_id, language="ko-KR")
+    genres_ko = extract_tmdb_genre_names(details_ko)
+    if genres_ko:
+        return genres_ko
+
+    details_en = fetch_tmdb_movie_details(tmdb_movie_id, language="en-US")
+    return extract_tmdb_genre_names(details_en)
+
+
 def score_tmdb_result(item, movie_name, open_dt):
     score = 0
 
@@ -494,6 +517,7 @@ def enrich_movie_with_tmdb(movie):
     open_dt = movie.get("openDt")
     poster_added = False
     overview_added = False
+    genre_added = False
 
     if not movie_name:
         return movie
@@ -516,6 +540,14 @@ def enrich_movie_with_tmdb(movie):
                 movie["overview"] = overview
                 overview_added = True
 
+    if not movie.get("genreNm"):
+        tmdb_id = best.get("id")
+        if tmdb_id:
+            genres = fetch_tmdb_genres(tmdb_id)
+            if genres:
+                movie["genreNm"] = genres
+                genre_added = True
+
     # KOBIS 개봉일이 없을 때만 TMDB 한국 개봉일로 보완
     if not movie.get("openDt"):
         tmdb_id = best.get("id")
@@ -526,8 +558,9 @@ def enrich_movie_with_tmdb(movie):
 
     poster_mark = "O" if poster_added else "X"
     overview_mark = "O" if overview_added else "X"
-    if poster_added or overview_added:
-        print(f"{poster_mark} | {overview_mark} | {movie_name}")
+    genre_mark = "O" if genre_added else "X"
+    if poster_added or overview_added or genre_added:
+        print(f"{poster_mark} | {overview_mark} | {genre_mark} | {movie_name}")
 
     return movie
 
@@ -537,7 +570,7 @@ def maybe_enrich_movie_with_tmdb(movie, excluded_ids):
     if movie_id and movie_id in excluded_ids:
         return movie
 
-    if movie.get("posterUrl") and movie.get("overview"):
+    if movie.get("posterUrl") and movie.get("overview") and movie.get("genreNm"):
         return movie
 
     return enrich_movie_with_tmdb(movie)
