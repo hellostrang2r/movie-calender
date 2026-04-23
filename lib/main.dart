@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 void main() {
@@ -38,6 +39,7 @@ class UIColors {
   // Movie card
   static const Color movieCardBackground = Color(0xFFFFFFFF);
   static const Color moviePosterBackground = Color(0xFFF3F4F6);
+  static const Color sidePanelBackground = Color(0xFFFFFFFF);
 
   // Badge
   static const Color rereleaseBadgeBackground = Color(0xFFFDE68A);
@@ -95,6 +97,7 @@ class UISizes {
 
   static const double errorIconSize = 40;
   static const double loadingStrokeWidth = 3;
+  static const double sidePanelWidthFactor = 0.5;
 }
 
 class UIText {
@@ -214,38 +217,47 @@ class ReleaseCalendarApp extends StatelessWidget {
 }
 
 class ReleaseCalendarPage extends StatefulWidget {
-  const ReleaseCalendarPage({super.key});
+  const ReleaseCalendarPage({super.key, this.repository});
+
+  final MovieRepository? repository;
 
   @override
   State<ReleaseCalendarPage> createState() => _ReleaseCalendarPageState();
 }
 
 class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
-  final MovieRepository repository = (kDebugMode && !kIsWeb)
-      ? LocalMovieRepository()
-      : GithubMovieRepository();
+  late final MovieRepository repository;
 
   late DateTime focusedMonth;
   late DateTime selectedDate;
   late final PageController _pageController;
+  late final DateTime _baseMonth;
 
   bool isLoading = true;
-  bool isMovieListVisible = true;
+  bool isMovieListVisible = false;
   String? errorMessage;
 
   List<Movie> monthMovies = [];
   Map<DateTime, List<Movie>> moviesByDate = {};
 
   static const int _initialPage = 1200;
+  int _currentPage = _initialPage;
+  int _loadRequestId = 0;
 
   @override
   void initState() {
     super.initState();
+    repository =
+        widget.repository ??
+        ((kDebugMode && !kIsWeb)
+            ? LocalMovieRepository()
+            : GithubMovieRepository());
     final now = DateTime.now();
-    focusedMonth = DateTime(now.year, now.month);
+    _baseMonth = DateTime(now.year, now.month);
+    focusedMonth = _baseMonth;
     selectedDate = DateTime(now.year, now.month, now.day);
     _pageController = PageController(initialPage: _initialPage);
-    _loadMonth(focusedMonth);
+    _loadMonth(focusedMonth, showLoading: true);
   }
 
   @override
@@ -298,12 +310,22 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
 
   DateTime _monthFromPage(int page) {
     final diff = page - _initialPage;
-    return DateTime(focusedMonth.year, focusedMonth.month + diff, 1);
+    return DateTime(_baseMonth.year, _baseMonth.month + diff, 1);
   }
 
-  Future<void> _loadMonth(DateTime month) async {
+  int _pageFromMonth(DateTime month) {
+    final monthDiff =
+        (month.year - _baseMonth.year) * 12 + month.month - _baseMonth.month;
+    return _initialPage + monthDiff;
+  }
+
+  Future<void> _loadMonth(DateTime month, {bool showLoading = false}) async {
+    final requestId = ++_loadRequestId;
+
     setState(() {
-      isLoading = true;
+      if (showLoading) {
+        isLoading = true;
+      }
       errorMessage = null;
     });
 
@@ -314,7 +336,7 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
       final movies = await repository.fetchMoviesByMonth(firstDay, lastDay);
       final grouped = _groupMoviesByDate(movies);
 
-      if (!mounted) return;
+      if (!mounted || requestId != _loadRequestId) return;
 
       setState(() {
         focusedMonth = firstDay;
@@ -325,16 +347,20 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
         if (normalizedSelected.year != firstDay.year ||
             normalizedSelected.month != firstDay.month) {
           selectedDate = firstDay;
-          isMovieListVisible = true;
+          isMovieListVisible = false;
         }
 
-        isLoading = false;
+        if (showLoading) {
+          isLoading = false;
+        }
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || requestId != _loadRequestId) return;
       setState(() {
         errorMessage = '영화 개봉 정보를 불러오지 못했습니다.\n$e';
-        isLoading = false;
+        if (showLoading) {
+          isLoading = false;
+        }
       });
     }
   }
@@ -365,6 +391,71 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
     });
   }
 
+  void _goToToday() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final todayMonth = DateTime(now.year, now.month);
+    final targetPage = _pageFromMonth(todayMonth);
+
+    setState(() {
+      selectedDate = today;
+      isMovieListVisible = true;
+    });
+
+    if (!_pageController.hasClients || _currentPage == targetPage) {
+      _loadMonth(todayMonth);
+      return;
+    }
+
+    _pageController.animateToPage(
+      targetPage,
+      duration: UIAnimation.pageDuration,
+      curve: UIAnimation.pageCurve,
+    );
+  }
+
+  Future<void> _showMovieSearch() async {
+    final movie = await showSearch<Movie?>(
+      context: context,
+      delegate: _MovieSearchDelegate(monthMovies),
+    );
+
+    if (movie == null || !mounted) return;
+
+    setState(() {
+      selectedDate = _normalizeDate(movie.openDate);
+      isMovieListVisible = true;
+    });
+  }
+
+  void _showSidePanel() {
+    showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      barrierColor: Colors.black38,
+      transitionDuration: const Duration(milliseconds: 220),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return const _CalendarSidePanel();
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -373,7 +464,23 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
         : UISizes.movieListHeight;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('영화 개봉 캘린더')),
+      appBar: AppBar(
+        leadingWidth: 64,
+        leading: TextButton(onPressed: _goToToday, child: const Text('오늘')),
+        title: const Text('영화 개봉 캘린더'),
+        actions: [
+          IconButton(
+            tooltip: '검색',
+            onPressed: _showMovieSearch,
+            icon: const Icon(Icons.search),
+          ),
+          IconButton(
+            tooltip: '정보',
+            onPressed: _showSidePanel,
+            icon: const Icon(Icons.info_outline),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -398,7 +505,8 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
                   : errorMessage != null
                   ? _ErrorState(
                       message: errorMessage!,
-                      onRetry: () => _loadMonth(focusedMonth),
+                      onRetry: () =>
+                          _loadMonth(focusedMonth, showLoading: true),
                     )
                   : Column(
                       children: [
@@ -420,6 +528,7 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
                                 ? PageView.builder(
                                     controller: _pageController,
                                     onPageChanged: (page) {
+                                      _currentPage = page;
                                       final month = _monthFromPage(page);
                                       _loadMonth(month);
                                     },
@@ -454,24 +563,145 @@ class _ReleaseCalendarPageState extends State<ReleaseCalendarPage> {
                             ),
                           ),
                         ],
-                        const Padding(
-                          padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'This product uses the TMDB API but is not endorsed or certified by TMDB.\n데이터 출처: 영화진흥위원회 KOBIS',
-                              style: TextStyle(
-                                color: Colors.black87,
-                                fontSize: 11,
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
-                        ),
                       ],
                     ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MovieSearchDelegate extends SearchDelegate<Movie?> {
+  _MovieSearchDelegate(this.movies);
+
+  final List<Movie> movies;
+
+  @override
+  String get searchFieldLabel => '영화 검색';
+
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      if (query.isNotEmpty)
+        IconButton(
+          tooltip: '검색어 지우기',
+          onPressed: () {
+            query = '';
+          },
+          icon: const Icon(Icons.clear),
+        ),
+    ];
+  }
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      tooltip: '뒤로',
+      onPressed: () => close(context, null),
+      icon: const Icon(Icons.arrow_back),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return _buildSearchResults(context);
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return _buildSearchResults(context);
+  }
+
+  Widget _buildSearchResults(BuildContext context) {
+    final normalizedQuery = query.trim().toLowerCase();
+    if (normalizedQuery.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final results = movies.where((movie) {
+      return movie.title.toLowerCase().contains(normalizedQuery) ||
+          movie.director.toLowerCase().contains(normalizedQuery) ||
+          movie.genre.toLowerCase().contains(normalizedQuery);
+    }).toList();
+
+    if (results.isEmpty) {
+      return const Center(
+        child: Text(
+          '검색 결과가 없습니다.',
+          style: TextStyle(
+            color: UIColors.bodyText,
+            fontSize: UIText.emptyText,
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(UISpacing.l),
+      itemCount: results.length,
+      separatorBuilder: (_, __) => const SizedBox(height: UISpacing.s),
+      itemBuilder: (context, index) {
+        final movie = results[index];
+        return _MovieSearchResultTile(
+          movie: movie,
+          onTap: () => close(context, movie),
+        );
+      },
+    );
+  }
+}
+
+class _MovieSearchResultTile extends StatelessWidget {
+  const _MovieSearchResultTile({required this.movie, required this.onTap});
+
+  final Movie movie;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final date =
+        '${movie.openDate.year}.${movie.openDate.month.toString().padLeft(2, '0')}.${movie.openDate.day.toString().padLeft(2, '0')}';
+
+    return Material(
+      color: UIColors.movieCardBackground,
+      borderRadius: BorderRadius.circular(UISizes.posterRadius),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(UISizes.posterRadius),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(UISpacing.m),
+          child: Row(
+            children: [
+              const Icon(Icons.movie_outlined, color: UIColors.icon),
+              const SizedBox(width: UISpacing.m),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      movie.title,
+                      style: const TextStyle(
+                        color: UIColors.titleText,
+                        fontSize: UIText.dialogBody,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: UISpacing.xs),
+                    Text(
+                      '$date · ${movie.genre} · ${movie.director}',
+                      style: const TextStyle(
+                        color: UIColors.subText,
+                        fontSize: UIText.movieDirector,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -564,6 +794,297 @@ class _MonthSummary extends StatelessWidget {
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CalendarSidePanel extends StatelessWidget {
+  const _CalendarSidePanel();
+
+  void _showAddToHomeScreenGuide(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('홈 화면에 바로가기 추가하기'),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _GuideStep(number: '1', text: 'iPhone에서 Safari로 이 페이지를 엽니다.'),
+              _GuideStep(number: '2', text: '하단 공유 버튼을 누릅니다.'),
+              _GuideStep(number: '3', text: '"홈 화면에 추가"를 선택합니다.'),
+              _GuideStep(number: '4', text: '오른쪽 위 "추가"를 누릅니다.'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final panelWidth = screenWidth < 600
+        ? screenWidth * 0.86
+        : (screenWidth * UISizes.sidePanelWidthFactor).clamp(320.0, 460.0);
+
+    return SafeArea(
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: SizedBox(
+          width: panelWidth,
+          height: double.infinity,
+          child: Material(
+            color: UIColors.sidePanelBackground,
+            elevation: 12,
+            child: Padding(
+              padding: const EdgeInsets.all(UISpacing.l),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: const Text(
+                          '정보',
+                          style: TextStyle(
+                            color: UIColors.titleText,
+                            fontSize: UIText.dialogTitle,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: '닫기',
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: UISpacing.l),
+                  _InfoStackTile(
+                    icon: Icons.add_to_home_screen,
+                    title: '홈 화면에 바로가기 추가하기',
+                    subtitle: 'iPhone Safari에서 빠르게 여는 방법',
+                    onTap: () => _showAddToHomeScreenGuide(context),
+                  ),
+                  const Spacer(),
+                  const Divider(height: 1, color: UIColors.divider),
+                  const SizedBox(height: UISpacing.l),
+                  const _InfoPanelFooter(),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoPanelFooter extends StatelessWidget {
+  const _InfoPanelFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _DataSourceAttribution(),
+        SizedBox(height: UISpacing.l),
+        Text(
+          '문의 및 피드백: bosko413@naver.com\n'
+          '새로운 기능이나 오류 제보는 위 메일로 부탁드립니다.\n'
+          '※ 일부 누락되는 데이터가 있을 수 있으니 참고바랍니다.\n'
+          '※ 자동화 과정에서 제외하지 못하는 성인물이 있을 수 있습니다.\n'
+          '© 2026 Movie Release Calendar by hello stranger',
+          style: TextStyle(
+            color: UIColors.bodyText,
+            fontSize: 11,
+            height: 1.45,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DataSourceAttribution extends StatelessWidget {
+  const _DataSourceAttribution();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _TmdbLogo(),
+        SizedBox(height: UISpacing.s),
+        Text(
+          '데이터 출처: 영화진흥위원회 KOBIS, TMDB\n'
+          'This product uses the TMDB API but is not endorsed or certified by TMDB.',
+          style: TextStyle(
+            color: UIColors.bodyText,
+            fontSize: 11,
+            height: 1.45,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TmdbLogo extends StatelessWidget {
+  const _TmdbLogo();
+
+  static const String _logoUrl =
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Tmdb.new.logo.svg/330px-Tmdb.new.logo.svg.png';
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'TMDB logo',
+      child: Image.network(
+        _logoUrl,
+        height: 34,
+        fit: BoxFit.contain,
+        alignment: Alignment.centerLeft,
+        errorBuilder: (context, error, stackTrace) {
+          return const Text(
+            'TMDB',
+            style: TextStyle(
+              color: Color(0xFF0D253F),
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _InfoStackTile extends StatelessWidget {
+  const _InfoStackTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: UIColors.scaffoldBackground,
+      borderRadius: BorderRadius.circular(UISizes.posterRadius),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(UISizes.posterRadius),
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(UISpacing.m),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(UISizes.posterRadius),
+            border: Border.all(color: UIColors.divider),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: UIColors.icon),
+              const SizedBox(width: UISpacing.m),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: UIColors.titleText,
+                        fontSize: UIText.dialogBody,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: UISpacing.xs),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: UIColors.subText,
+                        fontSize: UIText.movieDirector,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: UISpacing.s),
+              const Icon(
+                Icons.chevron_right,
+                color: UIColors.subText,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GuideStep extends StatelessWidget {
+  const _GuideStep({required this.number, required this.text});
+
+  final String number;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: UISpacing.s),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: UIColors.primaryButtonBackground,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              number,
+              style: const TextStyle(
+                color: UIColors.primaryButtonForeground,
+                fontSize: UIText.movieDirector,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: UISpacing.s),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: UIColors.bodyText,
+                fontSize: UIText.dialogBody,
+                height: 1.4,
+              ),
+            ),
           ),
         ],
       ),
@@ -1230,6 +1751,49 @@ abstract class MovieRepository {
   Future<List<Movie>> fetchMoviesByMonth(DateTime firstDay, DateTime lastDay);
 }
 
+List<Movie> _moviesFromJson(String body) {
+  final List<dynamic> data = jsonDecode(body);
+
+  return data.map((json) {
+    return Movie(
+      movieCd: json['movieCd'] as String,
+      title: json['movieNm'] as String,
+      openDate: DateTime.parse(json['openDt'] as String),
+      genre: json['genreNm'] as String? ?? '기타',
+      nation: json['nationAlt'] as String? ?? '미상',
+      director: json['director'] as String? ?? '정보 없음',
+      isReRelease: json['isReRelease'] as bool? ?? false,
+      posterUrl: json['posterUrl'] as String?,
+      overview: json['overview'] as String?,
+    );
+  }).toList();
+}
+
+List<Movie> _filterMoviesByRange(
+  List<Movie> movies,
+  DateTime firstDay,
+  DateTime lastDay,
+) {
+  return movies.where((movie) {
+    final d = movie.openDate;
+    final afterOrSame = !d.isBefore(
+      DateTime(firstDay.year, firstDay.month, firstDay.day),
+    );
+    final beforeOrSame = !d.isAfter(
+      DateTime(lastDay.year, lastDay.month, lastDay.day),
+    );
+    return afterOrSame && beforeOrSame;
+  }).toList();
+}
+
+Future<List<Movie>> _loadBundledMoviesByMonth(
+  DateTime firstDay,
+  DateTime lastDay,
+) async {
+  final body = await rootBundle.loadString('data/movies.json');
+  return _filterMoviesByRange(_moviesFromJson(body), firstDay, lastDay);
+}
+
 class MockMovieRepository implements MovieRepository {
   @override
   Future<List<Movie>> fetchMoviesByMonth(
@@ -1352,40 +1916,23 @@ class GithubMovieRepository implements MovieRepository {
     DateTime firstDay,
     DateTime lastDay,
   ) async {
-    final response = await http.get(
-      Uri.parse('$url?t=${DateTime.now().millisecondsSinceEpoch}'),
-    );
+    try {
+      final response = await http
+          .get(Uri.parse('$url?t=${DateTime.now().millisecondsSinceEpoch}'))
+          .timeout(const Duration(seconds: 3));
 
-    if (response.statusCode != 200) {
-      throw Exception('영화 데이터를 불러오지 못했습니다.');
+      if (response.statusCode == 200) {
+        return _filterMoviesByRange(
+          _moviesFromJson(response.body),
+          firstDay,
+          lastDay,
+        );
+      }
+    } catch (_) {
+      // Fall back to the bundled data below.
     }
 
-    final List<dynamic> data = jsonDecode(response.body);
-
-    final movies = data.map((json) {
-      return Movie(
-        movieCd: json['movieCd'] as String,
-        title: json['movieNm'] as String,
-        openDate: DateTime.parse(json['openDt'] as String),
-        genre: json['genreNm'] as String? ?? '기타',
-        nation: json['nationAlt'] as String? ?? '미상',
-        director: json['director'] as String? ?? '정보 없음',
-        isReRelease: json['isReRelease'] as bool? ?? false,
-        posterUrl: json['posterUrl'] as String?,
-        overview: json['overview'] as String?,
-      );
-    }).toList();
-
-    return movies.where((movie) {
-      final d = movie.openDate;
-      final afterOrSame = !d.isBefore(
-        DateTime(firstDay.year, firstDay.month, firstDay.day),
-      );
-      final beforeOrSame = !d.isAfter(
-        DateTime(lastDay.year, lastDay.month, lastDay.day),
-      );
-      return afterOrSame && beforeOrSame;
-    }).toList();
+    return _loadBundledMoviesByMonth(firstDay, lastDay);
   }
 }
 
@@ -1395,41 +1942,26 @@ class LocalMovieRepository implements MovieRepository {
     DateTime firstDay,
     DateTime lastDay,
   ) async {
-    final response = await http.get(
-      Uri.parse(
-        'http://localhost:8000/data/movies.json?t=${DateTime.now().millisecondsSinceEpoch}',
-      ),
-    );
+    try {
+      final response = await http
+          .get(
+            Uri.parse(
+              'http://localhost:8000/data/movies.json?t=${DateTime.now().millisecondsSinceEpoch}',
+            ),
+          )
+          .timeout(const Duration(milliseconds: 500));
 
-    if (response.statusCode != 200) {
-      throw Exception('로컬 영화 데이터를 불러오지 못했습니다.');
+      if (response.statusCode == 200) {
+        return _filterMoviesByRange(
+          _moviesFromJson(response.body),
+          firstDay,
+          lastDay,
+        );
+      }
+    } catch (_) {
+      // Fall back to the bundled data below.
     }
 
-    final List<dynamic> data = jsonDecode(response.body);
-
-    final movies = data.map((json) {
-      return Movie(
-        movieCd: json['movieCd'] as String,
-        title: json['movieNm'] as String,
-        openDate: DateTime.parse(json['openDt'] as String),
-        genre: json['genreNm'] as String? ?? '기타',
-        nation: json['nationAlt'] as String? ?? '미상',
-        director: json['director'] as String? ?? '정보 없음',
-        isReRelease: json['isReRelease'] as bool? ?? false,
-        posterUrl: json['posterUrl'] as String?,
-        overview: json['overview'] as String?,
-      );
-    }).toList();
-
-    return movies.where((movie) {
-      final d = movie.openDate;
-      final afterOrSame = !d.isBefore(
-        DateTime(firstDay.year, firstDay.month, firstDay.day),
-      );
-      final beforeOrSame = !d.isAfter(
-        DateTime(lastDay.year, lastDay.month, lastDay.day),
-      );
-      return afterOrSame && beforeOrSame;
-    }).toList();
+    return _loadBundledMoviesByMonth(firstDay, lastDay);
   }
 }
