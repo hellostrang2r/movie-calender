@@ -868,6 +868,74 @@ def ensure_movie_optional_fields(movie):
     return normalized
 
 
+def parse_saved_open_date(open_dt):
+    if not open_dt:
+        return None
+
+    try:
+        return datetime.date.fromisoformat(str(open_dt)[:10])
+    except ValueError:
+        return None
+
+
+def is_movie_missing_metadata(movie):
+    return any(
+        [
+            not movie.get("posterUrl"),
+            not movie.get("overview"),
+            not movie.get("genreNm"),
+            is_missing_director(movie),
+        ]
+    )
+
+
+def build_raw_movie_map(raw_movies, start_date, end_date):
+    raw_map = {}
+
+    for movie in raw_movies:
+        open_dt = parse_open_date(movie.get("openDt", ""))
+        if not should_include_raw_movie(movie, open_dt, start_date, end_date):
+            continue
+
+        normalized = normalize_movie(movie, open_dt)
+        movie_cd = movie_key(normalized)
+        if movie_cd and movie_cd not in raw_map:
+            raw_map[movie_cd] = normalized
+
+    return raw_map
+
+
+def refresh_existing_movies_in_window(
+    current_map,
+    raw_movie_map,
+    start_date,
+    end_date,
+    excluded_ids,
+):
+    refreshed = []
+
+    for movie_cd, existing_movie in current_map.items():
+        saved_open_dt = parse_saved_open_date(existing_movie.get("openDt"))
+        if not saved_open_dt or not (start_date <= saved_open_dt <= end_date):
+            continue
+
+        if not is_movie_missing_metadata(existing_movie):
+            continue
+
+        refreshed_movie = dict(existing_movie)
+        raw_movie = raw_movie_map.get(movie_cd)
+        if raw_movie:
+            refreshed_movie = merge_movie_metadata(refreshed_movie, raw_movie)
+
+        refreshed_movie = maybe_enrich_movie_with_tmdb(refreshed_movie, excluded_ids)
+
+        if refreshed_movie != existing_movie:
+            current_map[movie_cd] = refreshed_movie
+            refreshed.append(refreshed_movie)
+
+    return refreshed
+
+
 def detect_user_deleted_ids(last_generated_movies, current_movies):
     last_generated_ids = set(
         movie_key(movie) for movie in last_generated_movies if movie_key(movie)
@@ -1090,6 +1158,7 @@ def save_update_results(
 def print_update_summary(
     current_movies,
     newly_generated_movies,
+    refreshed_existing,
     added,
     skipped_existing,
     manual_added,
@@ -1099,6 +1168,7 @@ def print_update_summary(
     print("\n=== 업데이트 결과 ===")
     print(f"현재 목록 개수: {len(current_movies)}")
     print(f"새로 추출된 개수: {len(newly_generated_movies)}")
+    print(f"기존 영화 재보강 개수: {len(refreshed_existing)}")
     print(f"새로 추가된 개수: {len(added)}")
     print(f"기존에 있어서 유지된 개수: {len(skipped_existing)}")
     print(f"수동 추가 개수: {len(manual_added)}")
@@ -1110,6 +1180,11 @@ def print_update_summary(
         for movie in added[:20]:
             poster_mark = " [포스터]" if movie.get("posterUrl") else ""
             print(f"- {movie.get('movieNm')} ({movie.get('openDt')}){poster_mark}")
+
+    if refreshed_existing:
+        print("\n[재보강된 기존 영화]")
+        for movie in refreshed_existing[:20]:
+            print(f"- {movie.get('movieNm')} ({movie.get('openDt')})")
 
     print(f"\n저장 완료 → {MOVIES_FILE}")
     print(f"자동 생성 기준 저장 → {LAST_GENERATED_FILE}")
@@ -1143,6 +1218,14 @@ def main():
     current_map = build_movie_map(current_movies)
 
     raw_movies = fetch_all_movies(start_date.year, end_date.year)
+    raw_movie_map = build_raw_movie_map(raw_movies, start_date, end_date)
+    refreshed_existing = refresh_existing_movies_in_window(
+        current_map,
+        raw_movie_map,
+        start_date,
+        end_date,
+        excluded_ids,
+    )
     newly_generated_movies = build_newly_generated_movies(
         raw_movies,
         start_date,
@@ -1170,6 +1253,7 @@ def main():
     print_update_summary(
         current_movies,
         newly_generated_movies,
+        refreshed_existing,
         added,
         skipped_existing,
         manual_added,
