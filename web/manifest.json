@@ -1,6 +1,6 @@
 {
-    "name": "Movie calendar",
-    "short_name": "Movie calendar",
+    "name": "영화 개봉 캘린더",
+    "short_name": "영화 개봉 캘린더",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

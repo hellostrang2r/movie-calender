@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="Movie calendar"
+        android:label="영화 개봉 캘린더"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
