@@ -30,6 +30,7 @@ TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 KOBIS_TIMEOUT_SECONDS = 60
 KOBIS_MAX_RETRIES = 3
 UPDATE_WINDOW_DAYS = 90
+TMDB_ENRICH_LOG_HEADER_PRINTED = False
 TITLE_NOISE_PATTERNS = [
     r"\b4k\s*리마스터\b",
     r"\b4k\b",
@@ -568,6 +569,8 @@ def fetch_tmdb_kr_release_date(tmdb_movie_id):
 
 
 def enrich_movie_with_tmdb(movie):
+    global TMDB_ENRICH_LOG_HEADER_PRINTED
+
     movie_name = movie.get("movieNm", "")
     open_dt = movie.get("openDt")
     poster_added = False
@@ -625,6 +628,9 @@ def enrich_movie_with_tmdb(movie):
     genre_mark = "O" if genre_added else "X"
     director_mark = "O" if director_added else "X"
     if poster_added or overview_added or genre_added or director_added:
+        if not TMDB_ENRICH_LOG_HEADER_PRINTED:
+            print("\n[TMDB 보강 로그] 포스터 | 줄거리 | 장르 | 감독 | 영화명")
+            TMDB_ENRICH_LOG_HEADER_PRINTED = True
         print(
             f"{poster_mark} | {overview_mark} | {genre_mark} | {director_mark} | {movie_name}"
         )
