@@ -48,9 +48,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('정보'), findsOneWidget);
-    expect(find.text('홈 화면에 바로가기 추가하기'), findsOneWidget);
+    expect(find.text('아이폰: 홈 화면에 바로가기 추가'), findsOneWidget);
+    expect(find.text('안드로이드: 홈 화면에 바로가기 추가'), findsOneWidget);
 
-    await tester.tap(find.text('홈 화면에 바로가기 추가하기'));
+    await tester.tap(find.text('아이폰: 홈 화면에 바로가기 추가'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
