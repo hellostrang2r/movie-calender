@@ -27,7 +27,7 @@ flutter build web --release --base-href /movie-calendar/
 주간 자동화는 GitHub Actions로 설정되어 있습니다.
 
 - 워크플로 파일: `.github/workflows/weekly_update.yml`
-- 실행 시각: 매주 월요일 03:00 KST
+- 실행 시각: 매주 월요일, 금요일 03:00 KST
 - 수행 작업: 데이터 갱신, `flutter analyze`, `flutter test`, 웹 빌드, `docs` 갱신, 자동 커밋
 
 필수 GitHub Secrets:

@@ -994,6 +994,7 @@ class _InfoPanelFooter extends StatelessWidget {
         Text(
           '문의 및 피드백: bosko413@naver.com\n'
           '새로운 기능이나 오류 제보는 위 메일로 부탁드립니다.\n'
+          '※ 매주 월요일, 금요일 업데이트됩니다.\n'
           '※ 일부 누락되는 데이터가 있을 수 있으니 참고바랍니다.\n'
           '※ 자동화 과정에서 제외하지 못하는 성인물이 있을 수 있습니다.\n'
           '© 2026 Movie Release Calendar by hello stranger',
