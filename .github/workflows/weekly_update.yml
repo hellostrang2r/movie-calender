@@ -72,7 +72,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/movies.json data/last_generated_movies.json data/excluded_movie_ids.json data/manual_movies.json docs
+          git add data/movies.json data/last_generated_movies.json data/excluded_movie_ids.json data/manual_movies.json data/held_movies.json docs
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0

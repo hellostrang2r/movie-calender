@@ -1,0 +1,26 @@
+[
+  {
+    "movieCd": "20263090",
+    "movieNm": "붉은 10월의 반란 파트 2",
+    "openDt": "2026-04-17",
+    "genreNm": "",
+    "nationAlt": "기타",
+    "director": "정보 없음",
+    "isReRelease": false,
+    "overview": "",
+    "holdReason": "",
+    "addToMovies": true
+  },
+  {
+    "movieCd": "20263121",
+    "movieNm": "플래닛 어스 : 대자연의 힘 ",
+    "openDt": "2026-04-22",
+    "genreNm": "",
+    "nationAlt": "영국",
+    "director": "정보 없음",
+    "isReRelease": false,
+    "overview": "",
+    "holdReason": "",
+    "addToMovies": true
+  }
+]

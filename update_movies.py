@@ -929,6 +929,8 @@ def merge_movie_record(existing_movie, new_movie):
 def ensure_movie_optional_fields(movie):
     normalized = dict(movie)
     normalized.setdefault("overview", "")
+    normalized.setdefault("holdReason", "")
+    normalized.setdefault("addToMovies", False)
     return normalized
 
 
@@ -953,20 +955,45 @@ def is_movie_missing_metadata(movie):
     )
 
 
+def build_hold_reasons(movie):
+    reasons = []
+
+    if is_missing_director(movie):
+        reasons.append("감독 정보 없음")
+    if not movie.get("posterUrl"):
+        reasons.append("포스터 없음")
+    if not movie.get("overview"):
+        reasons.append("줄거리 없음")
+    if not movie.get("genreNm"):
+        reasons.append("장르 정보 없음")
+
+    return reasons
+
+
+def annotate_hold_reason(movie):
+    normalized = ensure_movie_optional_fields(movie)
+    reasons = build_hold_reasons(normalized)
+    normalized["holdReason"] = ", ".join(reasons)
+    return normalized
+
+
+def prepare_movie_for_manual_list(movie):
+    normalized = ensure_movie_optional_fields(movie)
+    manual_movie = dict(normalized)
+    manual_movie.pop("holdReason", None)
+    manual_movie.pop("addToMovies", None)
+    return manual_movie
+
+
 def should_hold_movie(movie):
     has_title = bool((movie.get("movieNm") or "").strip())
     has_open_date = bool((movie.get("openDt") or "").strip())
-    has_no_poster = not movie.get("posterUrl")
-    has_no_overview = not movie.get("overview")
-    has_no_genre = not movie.get("genreNm")
+    reasons = build_hold_reasons(movie)
 
     return (
         has_title
         and has_open_date
-        and is_missing_director(movie)
-        and has_no_poster
-        and has_no_overview
-        and has_no_genre
+        and len(reasons) == 4
     )
 
 
@@ -1004,6 +1031,7 @@ def refresh_held_movies(held_movies, raw_movie_map, excluded_ids):
         movie = maybe_enrich_movie_with_tmdb(movie, excluded_ids)
 
         if movie_cd in excluded_ids or should_hold_movie(movie):
+            movie = annotate_hold_reason(movie)
             still_held.append(movie)
         else:
             released.append(movie)
@@ -1011,19 +1039,40 @@ def refresh_held_movies(held_movies, raw_movie_map, excluded_ids):
     return sort_movies(still_held), sort_movies(released)
 
 
-def extract_held_movies_from_current_map(current_map, held_movies):
+def extract_held_movies_from_current_map(current_map, held_movies, forced_include_ids=None):
     held_map = build_movie_map(held_movies)
+    forced_include_ids = forced_include_ids or set()
 
     for movie_cd in list(current_map.keys()):
+        if movie_cd in forced_include_ids:
+            continue
+
         movie = ensure_movie_optional_fields(current_map[movie_cd])
         if not should_hold_movie(movie):
             continue
 
         existing_held_movie = held_map.get(movie_cd)
-        held_map[movie_cd] = merge_movie_record(existing_held_movie, movie)
+        held_map[movie_cd] = annotate_hold_reason(
+            merge_movie_record(existing_held_movie, movie)
+        )
         del current_map[movie_cd]
 
     return sort_movies(list(held_map.values()))
+
+
+def split_forced_held_movies(held_movies):
+    remaining_held = []
+    forced_movies = []
+
+    for held_movie in held_movies:
+        movie = ensure_movie_optional_fields(held_movie)
+        if movie.get("addToMovies"):
+            forced_movies.append(prepare_movie_for_manual_list(movie))
+            continue
+
+        remaining_held.append(movie)
+
+    return sort_movies(remaining_held), sort_movies(forced_movies)
 
 
 def build_raw_movie_map(raw_movies, start_date, end_date):
@@ -1205,7 +1254,7 @@ def build_newly_generated_movies(
 
         if should_hold_movie(normalized):
             seen_ids.add(movie_cd)
-            newly_held_movies.append(normalized)
+            newly_held_movies.append(annotate_hold_reason(normalized))
             continue
 
         seen_ids.add(movie_cd)
@@ -1318,6 +1367,7 @@ def print_update_summary(
     newly_held_movies,
     refreshed_existing,
     released_held_movies,
+    forced_added_movies,
     added,
     skipped_existing,
     manual_added,
@@ -1331,6 +1381,7 @@ def print_update_summary(
     print(f"새로 보류된 개수: {len(newly_held_movies)}")
     print(f"기존 영화 재보강 개수: {len(refreshed_existing)}")
     print(f"보류 해제 개수: {len(released_held_movies)}")
+    print(f"보류 목록에서 추가 요청된 개수: {len(forced_added_movies)}")
     print(f"새로 추가된 개수: {len(added)}")
     print(f"기존에 있어서 유지된 개수: {len(skipped_existing)}")
     print(f"수동 추가 개수: {len(manual_added)}")
@@ -1344,9 +1395,20 @@ def print_update_summary(
             poster_mark = " [포스터]" if movie.get("posterUrl") else ""
             print(f"- {movie.get('movieNm')} ({movie.get('openDt')}){poster_mark}")
 
+    if newly_held_movies:
+        print("\n[새로 보류된 영화]")
+        for movie in newly_held_movies[:20]:
+            reason_text = movie.get("holdReason") or "사유 확인 필요"
+            print(f"- {movie.get('movieNm')} ({movie.get('openDt')}) - {reason_text}")
+
     if refreshed_existing:
         print("\n[재보강된 기존 영화]")
         for movie in refreshed_existing[:20]:
+            print(f"- {movie.get('movieNm')} ({movie.get('openDt')})")
+
+    if forced_added_movies:
+        print("\n[보류 목록에서 추가된 영화]")
+        for movie in forced_added_movies[:20]:
             print(f"- {movie.get('movieNm')} ({movie.get('openDt')})")
 
     if released_held_movies:
@@ -1357,7 +1419,8 @@ def print_update_summary(
     if held_movies:
         print("\n[보류된 영화]")
         for movie in held_movies[:20]:
-            print(f"- {movie.get('movieNm')} ({movie.get('openDt')})")
+            reason_text = movie.get("holdReason") or "사유 확인 필요"
+            print(f"- {movie.get('movieNm')} ({movie.get('openDt')}) - {reason_text}")
 
     print(f"\n저장 완료 → {MOVIES_FILE}")
     print(f"자동 생성 기준 저장 → {LAST_GENERATED_FILE}")
@@ -1406,6 +1469,11 @@ def main():
         raw_movie_map,
         excluded_ids,
     )
+    held_movies, forced_added_movies = split_forced_held_movies(held_movies)
+    forced_include_ids = {
+        movie_key(movie) for movie in forced_added_movies if movie_key(movie)
+    }
+    manual_movies = merge_movies_into_list(manual_movies, forced_added_movies)
 
     for movie in released_held_movies:
         movie_cd = movie_key(movie)
@@ -1426,7 +1494,11 @@ def main():
     )
     manual_added, _ = merge_manual_movies(current_map, manual_movies)
     held_movies = merge_movies_into_list(held_movies, newly_held_movies)
-    held_movies = extract_held_movies_from_current_map(current_map, held_movies)
+    held_movies = extract_held_movies_from_current_map(
+        current_map,
+        held_movies,
+        forced_include_ids,
+    )
     final_movies = build_final_movies(current_map)
 
     print_data_warnings(final_movies)
@@ -1445,6 +1517,7 @@ def main():
         newly_held_movies,
         refreshed_existing,
         released_held_movies,
+        forced_added_movies,
         added,
         skipped_existing,
         manual_added,
